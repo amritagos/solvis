@@ -35,23 +35,23 @@ def minimum_image_shift(point, reference, box_dimensions):
     return shifted_point
 
 def sphericity(vol,area):
+    """
+    Calculate the sphericity, from the volume and area of the hull  
+    """
     sph = (math.pi**(1.0/3.0) * (6* vol)**(2.0/3.0)) / area
     return sph
 
-# Some variables that need to be defined 
-infilename = 'input/single_capped_trigonal_prism.lammpstrj'
-# out_dir = "output"
-# outfilename = "sph_data.txt" # save to output directory
+# Input filename 
+infilename = '../../resources/single_capped_trigonal_prism.lammpstrj'
+# In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
+fe_type = 3
+h_type = 2
+o_type = 1
 
 # Read in the current frame 
 currentframe = read(infilename, format="lammps-dump-text") # Read in the last frame of the trajectory
 # The sphericity should be 0.805005, as calculated by OVITO when taking a probe radius of 7. 
 ref_value = 0.805005
-
-# In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
-fe_type = 3
-h_type = 2
-o_type = 1
 
 # Delete the H atoms (In this example there are no H atoms, but still) 
 del currentframe[[atom.index for atom in currentframe if atom.number==h_type]]

@@ -1,0 +1,24 @@
+# $ micromamba create -f environment.yml
+# $ micromamba activate solvisenv
+#
+
+name: solvisenv
+channels:
+  - conda-forge
+# requirements:
+#   build:
+#     - {{ compiler('c') }}
+#     - {{ compiler('c++') }}
+dependencies:
+  - python==3.10
+  - ase
+  - numpy
+  - scipy
+  - ipython
+  - pandas 
+  - meson
+  - pyvista
+  - pymol-open-source
+  - pip:
+    # works for regular pip packages
+    - lammps-logfile

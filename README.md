@@ -13,6 +13,13 @@ micromamba create -f environment.yml
 micromamba activate solvisenv
 ```
 
+In order to install the code, run the following:
+
+```bash
+inv build # flit build
+inv build --install
+```
+
 ## Examples 
 
 Each example is self-contained. Go into the example directory and run the script. The inputs are short LAMMPS dump files inside the top-level `resources` directory.  

@@ -1,6 +1,6 @@
 # solvis
 
-![Image](resources/non_octahedral_shape.png)
+<img src="resources/non_octahedral_shape.png" width="200" />
 
 ## About
 

@@ -104,7 +104,7 @@ print('The calculated sphericity is', sph_value, 'which matches the reference va
 # Visualize the convex hull with pyvista
 faces = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
 polyhull = PolyData(k_near_pos, faces)
-pl = pv.Plotter(off_screen=False)
+pl = pv.Plotter(off_screen=True) #  window_size=[4000,4000]
 pl.image_scale = 4
 pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
@@ -142,8 +142,8 @@ def last_frame_info(plotter, cam_pos, outfilename=None):
 # In order to take the last screenshot and save it to an image 
 # pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions,"nonoctahedral.png"))
 pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions))
-print(cam_positions[-1])
-pl.set_camera = cam_positions[-1]
+pl.camera_position = cam_positions[-1]
+print(pl.camera_position)
 pl.screenshot("nonoctahedral.png")
 
 from PIL import Image, ImageChops

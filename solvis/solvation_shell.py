@@ -7,11 +7,11 @@ class SolvationShell(System):
     along with ASE atoms and bonds (bonds may be empty). This should be initialized such that there are not multiple ions
     If there are multiple atoms with the central atom type, print a warning   
     """
-    def __init__(self, atoms: Atoms, bonds, central_atom_type, solvent_atom_type):
+    def __init__(self, atoms: Atoms, bonds, central_atom_type, solvent_atom_types):
         super().__init__(atoms)
         self.bonds = bonds
         self.central_atom_type = central_atom_type
-        self.solvent_atom_type = solvent_atom_type
+        self.solvent_atom_types = solvent_atom_types
 
     def build_convex_hull(self):
     """

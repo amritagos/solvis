@@ -1,5 +1,7 @@
 # solvis
 
+![Image](resources/non_octahedral_shape.png)
+
 ## About
 
 Various ways to analyze and visualize solvation shell structures, using free codes. Meant primarily for analyzing the outputs produced by LAMMPS. 

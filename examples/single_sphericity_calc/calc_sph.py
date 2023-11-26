@@ -104,21 +104,26 @@ print('The calculated sphericity is', sph_value, 'which matches the reference va
 # Visualize the convex hull with pyvista
 faces = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
 polyhull = PolyData(k_near_pos, faces)
-pl = pv.Plotter()
+pl = pv.Plotter(off_screen=False, window_size=[4000,4000])
+pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
-matplotlib_cmap = plt.cm.get_cmap("plasma") # Get the colormap from matplotlib
+matplotlib_cmap = plt.cm.get_cmap("bwr") # Get the colormap from matplotlib
 pl.add_mesh(polyhull, 
-    line_width=1, 
+    line_width=3, 
     show_edges=True,
     scalars=dist[:6],
-    cmap=matplotlib_cmap)
+    cmap=matplotlib_cmap,
+    opacity=0.85,
+    clim=[2.04,2.12],
+    metallic=True,
+    show_scalar_bar=False,) 
 # Add the six nearest neighbours as points on the hull
-pl.add_points( k_near_pos,
-    color='black',
-    render_points_as_spheres=True,
-    point_size=15,
-    show_vertices=True,
-    lighting=True)
+# pl.add_points( k_near_pos,
+#     color='black',
+#     render_points_as_spheres=True,
+#     point_size=15,
+#     show_vertices=True,
+#     lighting=True)
 # Add the seventh neighbour, as a single particle in red 
 seventh_mol_pos = o_atoms_pos[neigh_ind[-1]]
 seventh_mol_pos = minimum_image_shift(seventh_mol_pos, fe_pos_query_pnt, box_len)
@@ -128,4 +133,31 @@ pl.add_points( seventh_mol_pos,
     point_size=15,
     show_vertices=True,
     lighting=True)
-pl.show()
+cam_positions = [pl.camera_position] # Camera positions we want to render later?
+def last_frame_info(plotter, cam_pos, outfilename=None):
+    if outfilename is not None:
+        plotter.screenshot(outfilename)
+    cam_positions.append(plotter.camera_position)
+# In order to take the last screenshot and save it to an image 
+# pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions,"nonoctahedral.png"))
+pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions))
+print(cam_positions[-1])
+pl.set_camera = cam_positions[-1]
+pl.screenshot("nonoctahedral.png")
+
+from PIL import Image, ImageChops
+
+def trim(im, border_pixels=0):
+    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, 0)
+    #Bounding box given as a 4-tuple defining the left, upper, right, and lower pixel coordinates.
+    #If the image is completely empty, this method returns None.
+    bbox = diff.getbbox()
+    bbox_borders = (bbox[0]-border_pixels, bbox[1]+border_pixels, bbox[2]+border_pixels, bbox[3]-border_pixels) # crop rectangle, as a (left, upper, right, lower)-tuple.
+    if bbox:
+        return im.crop(bbox)
+
+bg = Image.open("nonoctahedral.png")
+trimmed_im = trim(bg,10)
+trimmed_im.save("trimmed.png")

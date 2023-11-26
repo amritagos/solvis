@@ -17,6 +17,12 @@ dependencies:
   - ipython
   - pandas 
   - pyvista
+  # Dependencies for pyvista
+  - vtk
+  - pillow
+  - imageio
+  - pooch
+  - scooby
   # Packaging
   - flit
   - pytest==6.2.5

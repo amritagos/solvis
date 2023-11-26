@@ -104,7 +104,8 @@ print('The calculated sphericity is', sph_value, 'which matches the reference va
 # Visualize the convex hull with pyvista
 faces = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
 polyhull = PolyData(k_near_pos, faces)
-pl = pv.Plotter(off_screen=False, window_size=[4000,4000])
+pl = pv.Plotter(off_screen=False)
+pl.image_scale = 4
 pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
 matplotlib_cmap = plt.cm.get_cmap("bwr") # Get the colormap from matplotlib

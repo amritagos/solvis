@@ -72,11 +72,7 @@ def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, s
         # Create matplotlib colormap
         colors = [point_colours[a_index], point_colours[b_index]]
         m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
-        #
-        nodes = make_interpolated_points(pointa, pointb, num_points)
-        edges = edges_with_padding_adjacent(nodes)
-        #
-        cylinder = pv.PolyData(nodes, edges)
+        # Each tube is between the two input points 
         tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=1, radius=0.1, n_sides=15)
         # Create color ids
         color_ids = [] 
@@ -87,6 +83,7 @@ def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, s
         show_edges=False,
         metallic=True,
         smooth_shading=True,
+        pbr=True,
         specular=0.7,
         ambient=0.3,
         scalars=color_ids,
@@ -185,12 +182,14 @@ pl.image_scale = 4
 
 pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
-matplotlib_cmap = plt.cm.get_cmap("coolwarm") # Get the colormap from matplotlib
+# matplotlib_cmap = plt.cm.get_cmap("coolwarm") # Get the colormap from matplotlib
+colors = ["blue", "red"]
+matplotlib_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
 # Add the convex hull 
 pl.add_mesh(polyhull, 
     line_width=3, 
     show_edges=False,
-    opacity=0.85,
+    opacity=0.5,
     metallic=True,
     show_scalar_bar=False,
     specular=0.7,
@@ -200,7 +199,8 @@ pl.add_mesh(polyhull,
     pickable=False)
 
 # Create the bonds corresponding to the edges and add them to the plotter
-point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]# Don't hard code darkblue
+# Use matplotlib colors for points and bonds!
+point_colours = ["blue", "blue", "blue", "blue", "blue", "blue", "red"]# Don't hard code darkblue midnightblue
 pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours)
 
 # ------------------------------------
@@ -229,18 +229,20 @@ pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions), auto
 # Create a separate render image 
 pl_render = pv.Plotter(off_screen=True, window_size=[4000,4000])
 pl_render.set_background("white") # Background 
+pl_render.enable_depth_peeling(10)
 
 # Colour the mesh faces according to the distance from the center 
 pl_render.add_mesh(polyhull, 
     line_width=3, 
     show_edges=False,
-    opacity=0.85,
+    opacity=0.5,
     metallic=True,
     show_scalar_bar=False,
     specular=0.7,
-    ambient=0.3,cmap=matplotlib_cmap, 
+    ambient=0.3,
+    cmap=matplotlib_cmap, 
     clim=[dist[4],dist[-1]], 
-    scalars=dist) 
+    scalars=dist) # ambient=0.3,
 
 # Create the bonds from the edges
 pl_render = create_bonds_from_edges(pl_render, polyhull, edges, point_colours=point_colours)

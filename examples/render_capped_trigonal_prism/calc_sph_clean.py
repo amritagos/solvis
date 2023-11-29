@@ -11,9 +11,89 @@ from os import listdir
 from os.path import isfile, join
 from pyvista import PolyData
 import pyvista as pv
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import matplotlib.pyplot as plt
 from pyvista.plotting.opts import ElementType
+
+def make_interpolated_points(pointa, pointb, num_points):
+    """Interpolate points between pointa and pointb"""
+    t = np.linspace(0, 1, num_points + 2)[1:-1]  # Exclude endpoints to avoid duplicating pointa and pointb
+    x_interp = (1 - t) * pointa[0] + t * pointb[0]
+    y_interp = (1 - t) * pointa[1] + t * pointb[1]
+    z_interp = (1 - t) * pointa[2] + t * pointb[2]
+    points = np.column_stack((x_interp, y_interp, z_interp))
+    # Insert the end points 
+    points = np.insert(points, 0, pointa, axis=0)
+    points = np.insert(points, len(points), pointb, axis=0)
+    return points
+
+# Create a list of padded edges, with each point connected to the next 
+def edges_with_padding_adjacent(points):
+    n_segments = len(points)
+
+    edge_list = []
+
+    for i in range(n_segments-1):
+        edge_list.append( [i, i+1] )
+
+    edge_list = np.array(edge_list)
+    # We must "pad" the edges to indicate to vtk how many points per edge 
+    padding = np.empty(edges.shape[0], int) * 2
+    padding[:] = 2
+    edges_w_padding = np.vstack((padding, edges.T)).T
+    return edges_w_padding 
+
+def distance_projected(pointa, pointb, pointc, pointd):
+    # Calculate the direction vector of the line defined by C and D
+    direction_vector = pointd - pointc
+    
+    # Calculate the projection of A and B onto the line
+    projection_A = pointc + np.dot(pointa - pointc, direction_vector) / np.dot(direction_vector, direction_vector) * direction_vector
+    projection_B = pointc + np.dot(pointb - pointc, direction_vector) / np.dot(direction_vector, direction_vector) * direction_vector
+    
+    # Calculate the distance between the projections
+    projected_distance = np.linalg.norm(projection_B - projection_A)
+    
+    return projected_distance
+
+def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, single_bond_color=None):
+    """
+    Create bonds from faces in a PolyData object 
+    """ 
+
+    num_points = 5
+    points = hull.points 
+
+    for bond in edges:
+        a_index = bond[0]
+        b_index = bond[1]
+        pointa = points[a_index]
+        pointb = points[b_index]
+        # Create matplotlib colormap
+        colors = [point_colours[a_index], point_colours[b_index]]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+        #
+        nodes = make_interpolated_points(pointa, pointb, num_points)
+        edges = edges_with_padding_adjacent(nodes)
+        #
+        cylinder = pv.PolyData(nodes, edges)
+        tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=1, radius=0.1, n_sides=15)
+        # Create color ids
+        color_ids = [] 
+        for point in tube.points:
+            color_ids.append(distance_projected(tube.points[0], point, tube.points[0], tube.points[-1]))
+        color_ids = np.array(color_ids)
+        plotter.add_mesh(tube, 
+        show_edges=False,
+        metallic=True,
+        specular=0.7,
+        ambient=0.3,
+        scalars=color_ids,
+        cmap=m_cmap,
+        show_scalar_bar=False,
+        pickable=True)
+
+    return plotter 
 
 def minimum_image_shift(point, reference, box_dimensions):
     """
@@ -82,33 +162,29 @@ sph_value = sphericity(vol,area)
 print('The calculated sphericity with 7 neighbours is', sph_value, '\n')
 
 # Visualize the convex hull with pyvista
-faces = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
-polyhull = PolyData(k_near_pos, faces)
+faces_pyvistaformat = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
+polyhull = PolyData(k_near_pos, faces_pyvistaformat)
 
-# This returns a PolyData object!!
-edges = polyhull.extract_feature_edges(non_manifold_edges=False)
+faces = hull.simplices
 
-# Create a tube for each line inside edges
-bond_tubes = []
-# breakpoint()
+# Get edges as pairs of indices based on the faces
+edges = set()
+
+for simplex in faces:
+    edges.add(tuple(sorted([simplex[0], simplex[1]])))
+    edges.add(tuple(sorted([simplex[1], simplex[2]])))
+    edges.add(tuple(sorted([simplex[2], simplex[0]])))
+
+edges = np.array(list(edges))
 
 # For interactive plotting 
 pl = pv.Plotter(off_screen=False) #  window_size=[4000,4000]
 pl.image_scale = 4
 
-remove_edges = []
-
-def callback(edge):
-    print("selected, ", edge, " and type", type(edge)) 
-    remove_edges.append(edge)
-
-# Pick edge
-# pl.enable_cell_picking(callback=callback)
-pl.enable_element_picking(callback=callback, mode=ElementType.EDGE)
-
 pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
 matplotlib_cmap = plt.cm.get_cmap("bwr") # Get the colormap from matplotlib
+# Add the convex hull 
 pl.add_mesh(polyhull, 
     line_width=3, 
     show_edges=False,
@@ -118,9 +194,26 @@ pl.add_mesh(polyhull,
     specular=0.7,
     ambient=0.3,cmap=matplotlib_cmap, 
     clim=[dist[4],dist[-1]], 
-    scalars=dist,)
+    scalars=dist,
+    pickable=False)
 
-pl.add_mesh(edges, color='red', line_width=10, pickable=True)
+# Create the bonds corresponding to the edges and add them to the plotter
+point_colours = ["blue", "blue", "blue", "blue", "blue", "blue", "red"]# Don't hard code
+pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours)
+
+# ------------------------------------
+# Remove bonds (actors), which are individual meshes 
+
+remove_bonds = []
+
+def callback(actor):
+    print("selected, ", actor, " and type", type(actor)) 
+    print("\n")
+    pl.remove_actor(actor)
+
+pl.enable_mesh_picking(callback, use_actor=True, show=False)
+
+# ------------------------------------
 
 cam_positions = [pl.camera_position] # Camera positions we want to render later?
 
@@ -131,9 +224,11 @@ def last_frame_info(plotter, cam_pos, outfilename=None):
     cam_positions.append(plotter.camera_position)
  
 pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions), auto_close=False)
-
-breakpoint()
-
+# Test image  
+pl.camera_position = cam_positions[-1]
+pl.camera_set = True
+pl.screenshot("nonoctahedral_interactive.png")
+# -------------------------------------------------
 # Create a separate render image 
 pl_render = pv.Plotter(off_screen=True, window_size=[4000,4000])
 pl_render.set_background("white") # Background 
@@ -149,8 +244,6 @@ pl_render.add_mesh(polyhull,
     ambient=0.3,cmap=matplotlib_cmap, 
     clim=[dist[4],dist[-1]], 
     scalars=dist) 
-
-pl_render.add_mesh(edges, color='red', line_width=10) 
 
 pl_render.camera_position = cam_positions[-1]
 pl_render.camera_set = True

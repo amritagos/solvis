@@ -64,7 +64,7 @@ def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, s
     num_points = 5
     points = hull.points 
 
-    for bond in edges:
+    for idx, bond in enumerate(edges):
         a_index = bond[0]
         b_index = bond[1]
         pointa = points[a_index]
@@ -86,12 +86,14 @@ def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, s
         plotter.add_mesh(tube, 
         show_edges=False,
         metallic=True,
+        smooth_shading=True,
         specular=0.7,
         ambient=0.3,
         scalars=color_ids,
         cmap=m_cmap,
         show_scalar_bar=False,
-        pickable=True)
+        pickable=True,
+        name="tube"+str(idx))
 
     return plotter 
 
@@ -183,7 +185,7 @@ pl.image_scale = 4
 
 pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
-matplotlib_cmap = plt.cm.get_cmap("bwr") # Get the colormap from matplotlib
+matplotlib_cmap = plt.cm.get_cmap("coolwarm") # Get the colormap from matplotlib
 # Add the convex hull 
 pl.add_mesh(polyhull, 
     line_width=3, 
@@ -198,7 +200,7 @@ pl.add_mesh(polyhull,
     pickable=False)
 
 # Create the bonds corresponding to the edges and add them to the plotter
-point_colours = ["blue", "blue", "blue", "blue", "blue", "blue", "red"]# Don't hard code
+point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]# Don't hard code darkblue
 pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours)
 
 # ------------------------------------
@@ -207,11 +209,10 @@ pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours)
 remove_bonds = []
 
 def callback(actor):
-    print("selected, ", actor, " and type", type(actor)) 
-    print("\n")
-    pl.remove_actor(actor)
+    remove_bonds.append(actor.name)
+    print("Removed actor, ", actor.name, "\n")
 
-pl.enable_mesh_picking(callback, use_actor=True, show=False)
+pl.enable_mesh_picking(callback, use_actor=True, show=True)
 
 # ------------------------------------
 
@@ -224,10 +225,6 @@ def last_frame_info(plotter, cam_pos, outfilename=None):
     cam_positions.append(plotter.camera_position)
  
 pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions), auto_close=False)
-# Test image  
-pl.camera_position = cam_positions[-1]
-pl.camera_set = True
-pl.screenshot("nonoctahedral_interactive.png")
 # -------------------------------------------------
 # Create a separate render image 
 pl_render = pv.Plotter(off_screen=True, window_size=[4000,4000])
@@ -245,8 +242,14 @@ pl_render.add_mesh(polyhull,
     clim=[dist[4],dist[-1]], 
     scalars=dist) 
 
+# Create the bonds from the edges
+pl_render = create_bonds_from_edges(pl_render, polyhull, edges, point_colours=point_colours)
+# Remove the bonds 
+pl_render.remove_actor(remove_bonds)
+
 pl_render.camera_position = cam_positions[-1]
 pl_render.camera_set = True
+print("Camera position set to ", pl_render.camera_position)
 pl_render.screenshot("nonoctahedral.png")
 
 from PIL import Image, ImageChops

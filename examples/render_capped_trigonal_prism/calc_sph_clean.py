@@ -13,35 +13,7 @@ from pyvista import PolyData
 import pyvista as pv
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import matplotlib.pyplot as plt
-from pyvista.plotting.opts import ElementType
-
-def make_interpolated_points(pointa, pointb, num_points):
-    """Interpolate points between pointa and pointb"""
-    t = np.linspace(0, 1, num_points + 2)[1:-1]  # Exclude endpoints to avoid duplicating pointa and pointb
-    x_interp = (1 - t) * pointa[0] + t * pointb[0]
-    y_interp = (1 - t) * pointa[1] + t * pointb[1]
-    z_interp = (1 - t) * pointa[2] + t * pointb[2]
-    points = np.column_stack((x_interp, y_interp, z_interp))
-    # Insert the end points 
-    points = np.insert(points, 0, pointa, axis=0)
-    points = np.insert(points, len(points), pointb, axis=0)
-    return points
-
-# Create a list of padded edges, with each point connected to the next 
-def edges_with_padding_adjacent(points):
-    n_segments = len(points)
-
-    edge_list = []
-
-    for i in range(n_segments-1):
-        edge_list.append( [i, i+1] )
-
-    edge_list = np.array(edge_list)
-    # We must "pad" the edges to indicate to vtk how many points per edge 
-    padding = np.empty(edges.shape[0], int) * 2
-    padding[:] = 2
-    edges_w_padding = np.vstack((padding, edges.T)).T
-    return edges_w_padding 
+from pyvista.plotting.opts import ElementType 
 
 def distance_projected(pointa, pointb, pointc, pointd):
     # Calculate the direction vector of the line defined by C and D
@@ -56,6 +28,36 @@ def distance_projected(pointa, pointb, pointc, pointd):
     
     return projected_distance
 
+# The bond is coloured according to a gradient between the two
+# end point colours 
+# actor_name will be the name of the actor in the plotter, needed for interactive deletion
+# a_color and b_color (colors of end points as strings)
+def add_bond(plotter, pointa, pointb, a_color, b_color, actor_name):
+
+    # Create matplotlib colormap
+    colors = [a_color, b_color]
+    m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+    # Each tube is between the two input points 
+    tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=1, radius=0.1, n_sides=15)
+    # Create color ids
+    color_ids = [] 
+    for point in tube.points:
+        color_ids.append(distance_projected(tube.points[0], point, tube.points[0], tube.points[-1]))
+    color_ids = np.array(color_ids)
+    plotter.add_mesh(tube, 
+    show_edges=False,
+    metallic=True,
+    smooth_shading=True,
+    specular=0.7,
+    ambient=0.3,
+    scalars=color_ids,
+    cmap=m_cmap,
+    show_scalar_bar=False,
+    pickable=True,
+    name=actor_name) # pbr=True for shiny 
+
+    return plotter
+
 def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, single_bond_color=None):
     """
     Create bonds from faces in a PolyData object 
@@ -69,30 +71,33 @@ def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, s
         b_index = bond[1]
         pointa = points[a_index]
         pointb = points[b_index]
-        # Create matplotlib colormap
-        colors = [point_colours[a_index], point_colours[b_index]]
-        m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
-        # Each tube is between the two input points 
-        tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=1, radius=0.1, n_sides=15)
-        # Create color ids
-        color_ids = [] 
-        for point in tube.points:
-            color_ids.append(distance_projected(tube.points[0], point, tube.points[0], tube.points[-1]))
-        color_ids = np.array(color_ids)
-        plotter.add_mesh(tube, 
+        actor_name = "tube"+str(idx)
+        # Create the bond
+        plotter = add_bond(plotter, pointa, pointb, point_colours[a_index], point_colours[b_index], actor_name)
+
+    return plotter 
+
+# The points are coloured according to a list of colours  
+# actor_name will be the name of the actor in the plotter, needed for interactive deletion
+# colors should be a list containing the colors for each atom 
+def add_atoms(plotter, pointset, colors, radius):
+
+    # Go over all the points inside pointset
+    for i, (point, color) in enumerate(zip(pointset, colors)):
+        sphere = pv.Sphere(radius=radius, center=point)
+        actor_name = "p_"+str(i)
+        # Add the actor
+        plotter.add_mesh(sphere,
+        color=color, 
         show_edges=False,
         metallic=True,
         smooth_shading=True,
-        pbr=True,
         specular=0.7,
         ambient=0.3,
-        scalars=color_ids,
-        cmap=m_cmap,
-        show_scalar_bar=False,
         pickable=True,
-        name="tube"+str(idx))
+        name=actor_name) # pbr=True for shiny
 
-    return plotter 
+    return plotter
 
 def minimum_image_shift(point, reference, box_dimensions):
     """
@@ -183,7 +188,8 @@ pl.image_scale = 4
 pl.set_background("white") # Background 
 # Colour the mesh faces according to the distance from the center 
 # matplotlib_cmap = plt.cm.get_cmap("coolwarm") # Get the colormap from matplotlib
-colors = ["blue", "red"]
+# colors = ["blue", "red"]
+colors = ["#3737d2", "red"]
 matplotlib_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
 # Add the convex hull 
 pl.add_mesh(polyhull, 
@@ -200,7 +206,7 @@ pl.add_mesh(polyhull,
 
 # Create the bonds corresponding to the edges and add them to the plotter
 # Use matplotlib colors for points and bonds!
-point_colours = ["blue", "blue", "blue", "blue", "blue", "blue", "red"]# Don't hard code darkblue midnightblue
+point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]# Don't hard code darkblue midnightblue
 pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours)
 
 # ------------------------------------
@@ -230,6 +236,7 @@ pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions), auto
 pl_render = pv.Plotter(off_screen=True, window_size=[4000,4000])
 pl_render.set_background("white") # Background 
 pl_render.enable_depth_peeling(10)
+pl_render.enable_shadows()
 
 # Colour the mesh faces according to the distance from the center 
 pl_render.add_mesh(polyhull, 
@@ -242,12 +249,15 @@ pl_render.add_mesh(polyhull,
     ambient=0.3,
     cmap=matplotlib_cmap, 
     clim=[dist[4],dist[-1]], 
-    scalars=dist) # ambient=0.3,
+    scalars=dist) 
 
 # Create the bonds from the edges
 pl_render = create_bonds_from_edges(pl_render, polyhull, edges, point_colours=point_colours)
 # Remove the bonds 
 pl_render.remove_actor(remove_bonds)
+
+# Add the atoms as spheres 
+pl_render = add_atoms(pl_render, k_near_pos, point_colours, radius=0.1)
 
 pl_render.camera_position = cam_positions[-1]
 pl_render.camera_set = True

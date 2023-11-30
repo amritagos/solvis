@@ -32,11 +32,25 @@ def distance_projected(pointa, pointb, pointc, pointd):
 # end point colours 
 # actor_name will be the name of the actor in the plotter, needed for interactive deletion
 # a_color and b_color (colors of end points as strings)
-def add_bond(plotter, pointa, pointb, a_color, b_color, actor_name):
+# Supported bond gradients: 0 (default, shading starts from the tips),
+# any number between 0 and 0.5
+# every other number is invalid 
+def add_bond(plotter, pointa, pointb, a_color, b_color, actor_name, bond_gradient_start=0.0,**kwargs):
 
-    # Create matplotlib colormap
-    colors = [a_color, b_color]
-    m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+    # Create matplotlib colormap which will be the gradient for the bond 
+    if bond_gradient_start==0.0:
+        colors = [a_color, b_color]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+    elif bond_gradient_start>0.0 and bond_gradient_start<=0.5:
+        nodes = [0.0, bond_gradient_start, 1.0-bond_gradient_start, 1.0]
+        colors = [a_color, a_color, b_color, b_color]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", list(zip(nodes,colors)))
+    else:
+        # Print warning
+        print("You entered an invalid value for bond shading. Reverting to default.\n")
+        colors = [a_color, b_color]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+
     # Each tube is between the two input points 
     tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=1, radius=0.1, n_sides=15)
     # Create color ids
@@ -45,20 +59,14 @@ def add_bond(plotter, pointa, pointb, a_color, b_color, actor_name):
         color_ids.append(distance_projected(tube.points[0], point, tube.points[0], tube.points[-1]))
     color_ids = np.array(color_ids)
     plotter.add_mesh(tube, 
-    show_edges=False,
-    metallic=True,
-    smooth_shading=True,
-    specular=0.7,
-    ambient=0.3,
     scalars=color_ids,
     cmap=m_cmap,
-    show_scalar_bar=False,
-    pickable=True,
-    name=actor_name) # pbr=True for shiny 
+    name=actor_name,
+    **kwargs)
 
     return plotter
 
-def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, single_bond_color=None):
+def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, single_bond_color=None, bond_gradient_start=0.0,**kwargs):
     """
     Create bonds from faces in a PolyData object 
     """ 
@@ -73,14 +81,15 @@ def create_bonds_from_edges(plotter, hull:PolyData, edges, point_colours=None, s
         pointb = points[b_index]
         actor_name = "tube"+str(idx)
         # Create the bond
-        plotter = add_bond(plotter, pointa, pointb, point_colours[a_index], point_colours[b_index], actor_name)
+        plotter = add_bond(plotter, pointa, pointb, point_colours[a_index], point_colours[b_index], actor_name, bond_gradient_start,**kwargs)
 
     return plotter 
 
 # The points are coloured according to a list of colours  
 # actor_name will be the name of the actor in the plotter, needed for interactive deletion
-# colors should be a list containing the colors for each atom 
-def add_atoms(plotter, pointset, colors, radius):
+# colors should be a list containing the colors for each atom
+# kwargs: Other plotting key word arguments you can set for PyVista 
+def add_atoms(plotter, pointset, colors, radius, **kwargs):
 
     # Go over all the points inside pointset
     for i, (point, color) in enumerate(zip(pointset, colors)):
@@ -89,13 +98,8 @@ def add_atoms(plotter, pointset, colors, radius):
         # Add the actor
         plotter.add_mesh(sphere,
         color=color, 
-        show_edges=False,
-        metallic=True,
-        smooth_shading=True,
-        specular=0.7,
-        ambient=0.3,
-        pickable=True,
-        name=actor_name) # pbr=True for shiny
+        name=actor_name,
+        **kwargs) # pbr=True for shiny metallic appearance 
 
     return plotter
 
@@ -126,16 +130,47 @@ def sphericity(vol,area):
     sph = (math.pi**(1.0/3.0) * (6* vol)**(2.0/3.0)) / area
     return sph
 
-# def create_tube(point1, point2):
-    
-#     return tube
-
 # Input filename 
 infilename = '../../resources/single_capped_trigonal_prism_unwrapped.lammpstrj'
 # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
 fe_type = 3
 h_type = 2
 o_type = 1
+
+# Decide what kind of gradient shading you want for bonds 
+bond_gradient_start = 0.1
+
+# Options for plotting meshes with PyVista
+
+# Dictionary for solvation shell mesh (add_mesh) options 
+shell_mesh_options = {'line_width':3, 
+'show_edges':False,
+'opacity':0.5,
+'metallic':True,
+'specular':0.7,
+'ambient':0.3}
+
+# Dictionary for atom (add_mesh) options
+atom_mesh_options = {'show_edges':False,
+'metallic':True,
+'smooth_shading':True,
+'specular':0.7,
+'ambient':0.3,
+'pickable':True,
+}
+
+# Dictionary for bond (add_mesh) options
+bond_mesh_options = {'show_edges':False,
+'metallic':True,
+'smooth_shading':True,
+'specular':0.7,
+'ambient':0.3,
+'show_scalar_bar':False,
+'pickable':True,
+}
+
+# ------------------------------------------------------
+# Glean the coordinates from the LAMMPS trajectory file 
 
 # Read in the current frame 
 currentframe = read(infilename, format="lammps-dump-text") # Read in the last frame of the trajectory
@@ -193,21 +228,17 @@ colors = ["#3737d2", "red"]
 matplotlib_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
 # Add the convex hull 
 pl.add_mesh(polyhull, 
-    line_width=3, 
-    show_edges=False,
-    opacity=0.5,
-    metallic=True,
-    show_scalar_bar=False,
-    specular=0.7,
-    ambient=0.3,cmap=matplotlib_cmap, 
+    cmap=matplotlib_cmap, 
     clim=[dist[4],dist[-1]], 
     scalars=dist,
-    pickable=False)
+    show_scalar_bar=False,
+    pickable=False,
+    **shell_mesh_options)
 
 # Create the bonds corresponding to the edges and add them to the plotter
 # Use matplotlib colors for points and bonds!
 point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]# Don't hard code darkblue midnightblue
-pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours)
+pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours, bond_gradient_start=bond_gradient_start,**bond_mesh_options)
 
 # ------------------------------------
 # Remove bonds (actors), which are individual meshes 
@@ -240,24 +271,19 @@ pl_render.enable_shadows()
 
 # Colour the mesh faces according to the distance from the center 
 pl_render.add_mesh(polyhull, 
-    line_width=3, 
-    show_edges=False,
-    opacity=0.5,
-    metallic=True,
-    show_scalar_bar=False,
-    specular=0.7,
-    ambient=0.3,
     cmap=matplotlib_cmap, 
     clim=[dist[4],dist[-1]], 
-    scalars=dist) 
+    scalars=dist,
+    show_scalar_bar=False,
+    **shell_mesh_options) 
 
 # Create the bonds from the edges
-pl_render = create_bonds_from_edges(pl_render, polyhull, edges, point_colours=point_colours)
+pl_render = create_bonds_from_edges(pl_render, polyhull, edges, point_colours=point_colours, bond_gradient_start=bond_gradient_start,**bond_mesh_options)
 # Remove the bonds 
 pl_render.remove_actor(remove_bonds)
 
 # Add the atoms as spheres 
-pl_render = add_atoms(pl_render, k_near_pos, point_colours, radius=0.1)
+pl_render = add_atoms(pl_render, k_near_pos, point_colours, radius=0.1, **atom_mesh_options)
 
 pl_render.camera_position = cam_positions[-1]
 pl_render.camera_set = True

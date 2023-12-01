@@ -7,16 +7,17 @@ class SolvationShell(System):
     along with ASE atoms and bonds (bonds may be empty). This should be initialized such that there are not multiple ions
     If there are multiple atoms with the central atom type, print a warning   
     """
-    def __init__(self, atoms: Atoms, bonds, central_atom_type, solvent_atom_types):
+    def __init__(self, atoms: Atoms, bonds):
         super().__init__(atoms)
         self.bonds = bonds
-        self.central_atom_type = central_atom_type
-        self.solvent_atom_types = solvent_atom_types
+        # self.central_atom_type = central_atom_type
+        # self.solvent_atom_types = solvent_atom_types
 
     def build_convex_hull(self):
-    """
-    Takes the type of the central atom (in LAMMPS there are integral numbers) and the solvent atom type  
-    """ 
+        """
+        Takes the type of the central atom (in LAMMPS there are integral numbers) and the solvent atom type  
+        """
+        pass 
 
     def calculate_properties(self):
         # Implement methods to calculate iod, cn, r7dist based on the current atoms and bonds

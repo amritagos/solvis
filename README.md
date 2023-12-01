@@ -4,7 +4,7 @@
 
 ## About
 
-Various ways to analyze and visualize solvation shell structures, built upon [`PyVista`](https://docs.pyvista.org/version/stable/). Meant primarily for analyzing the outputs produced by LAMMPS here. 
+Various ways to analyze and visualize solvation shell structures, which wraps [`PyVista`](https://docs.pyvista.org/version/stable/). Meant primarily for analyzing the outputs produced by LAMMPS here. 
 
 ## Installation
 

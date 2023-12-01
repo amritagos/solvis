@@ -7,3 +7,4 @@ __version__ = "0.1.0"
 from .system import * 
 from .solvation_shell import *
 from .util import * 
+from .visualization import *

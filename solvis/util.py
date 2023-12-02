@@ -1,6 +1,7 @@
 import numpy as np
 import math 
 from matplotlib.colors import LinearSegmentedColormap
+from PIL import Image, ImageChops
 
 def minimum_image_shift(point, reference, box_dimensions):
     """
@@ -99,3 +100,15 @@ def create_two_color_gradient(color1:str, color2:str, gradient_start=0.0):
         m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
 
     return m_cmap
+
+# Trim an image with some tolerance 
+def trim(im, border_pixels=0):
+    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, 0)
+    #Bounding box given as a 4-tuple defining the left, upper, right, and lower pixel coordinates.
+    #If the image is completely empty, this method returns None.
+    bbox = diff.getbbox()
+    bbox_borders = (bbox[0]-border_pixels, bbox[1]+border_pixels, bbox[2]+border_pixels, bbox[3]-border_pixels) # crop rectangle, as a (left, upper, right, lower)-tuple.
+    if bbox:
+        return im.crop(bbox)

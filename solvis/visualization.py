@@ -14,21 +14,22 @@ from pyvista.plotting.opts import ElementType
 from .util import create_two_color_gradient, distance_projected
 
 class AtomicPlotter:
-     """Plots atoms, bonds and convex hulls using PyVista
-     if interactive mode is on, the window_size will be ignored
-     Interactive mode means the atoms and bonds will be pickable
-     depth_peeling: If set to True, then depth peeling will be enabled for nicer translucent
-     images
-     shadows: If set to True, shadows will be enabled """
-     def __init__(self, interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=True):
-         self.interactive_mode = interactive_mode 
+    """Plots atoms, bonds and convex hulls using PyVista
+    if interactive mode is on, the window_size will be ignored
+    Interactive mode means the atoms and bonds will be pickable
+    depth_peeling: If set to True, then depth peeling will be enabled for nicer translucent
+    images
+    shadows: If set to True, shadows will be enabled """
+    def __init__(self, interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=True):
 
-         if self.interactive_mode:
+        self.interactive_mode = interactive_mode 
+
+        if self.interactive_mode:
             self.plotter = pv.Plotter(off_screen=False)
             self.plotter.image_scale = 4 # For nicer resolution if you take a screenshot
         else:
             # The plotter will render images offscreen
-            self.plotter = pv.Plotter(off_screen=True, window_size=window_size)
+            self.plotter = pv.Plotter(off_screen=True, window_size=window_size)   
 
         # More options for the plotter
         self.plotter.set_background("white") # Make transparent later
@@ -174,31 +175,64 @@ class AtomicPlotter:
             **mesh_options,
             )
 
-    # TODO
-    # def create_bonds_from_edges(pointset, colors, radius=0.1, **mesh_options_override_default):
-    #     """ 
-    #     Plot points (i.e. atoms) as spheres 
+    def create_bonds_from_edges(pointset, edges, point_colors=None, single_color=None, 
+        radius=0.1, resolution=1,bond_gradient_start=0.0,**mesh_options_override_default):
+        """ 
+        Create bonds from a list of bonds, using 
 
-    #     pointset: ndarray of coordinates every point inside pointset
-    #     colors: Color of each point. Must be the same length as the number of points
-    #     radius: Radius of the Sphere created for the atom (Default 0.1)
-    #     mesh_options_override_default: Arguments in the PyVista add_mesh function,
-    #     that will override the default atom_bond_mesh_options. """
+        pointset: ndarray of coordinates every point inside pointset
+        edges: Bonds such that each index corresponds to a point inside pointset
+        point_colors: list of colors corresponding to the color of each point
+        single_color: Color of all bonds. If you set this, it will override point_colors if you set that also 
+        radius: Radius of the tube created for the bond (Default 0.1)
+        resolution: Resolution of the tube created for the bond (Default 1), see PolyVista tube for more details
+        bond_gradient_start: (Default 0.0) Where the mixing of the two colors will start.
+        mesh_options_override_default: Arguments in the PyVista add_mesh function,
+        that will override the default atom_bond_mesh_options."""
 
-    #     # Only override the default options with user-defined options
-    #     mesh_options = {k: mesh_options_override_default[k] for k in mesh_options_override_default if k in self.atom_bond_mesh_options}
+        if single_color is not None:
+            point_colors = [single_color for i in range(len(pointset))]
 
-    #     # If interactive mode is on, make the bond pickable
-    #     if self.interactive_mode:
-    #         mesh_options.update({"pickable":True})
+        for idx, bond in enumerate(edges):
+            a_index = bond[0]
+            b_index = bond[1]
+            pointa = pointset[a_index]
+            pointb = pointset[b_index]
+            actor_name = "tube"+str(idx)
+            # Create the bond
+            add_bond(pointa, pointb, point_colours[a_index], point_colours[b_index], actor_name, radius, resolution,bond_gradient_start, **mesh_options_override_default)
 
-    #     # Go over all the points inside pointset
-    #     for i, (point, color) in enumerate(zip(pointset, colors)):
-    #         sphere = pv.Sphere(radius=radius, center=point)
-    #         actor_name = "p_"+str(i)
-    #         # Add the actor
-    #         self.plotter.add_mesh(sphere,
-    #             color=color, 
-    #             name=actor_name,
-    #             **mesh_options,
-    #             )
+    def interactive_window(delete_actor=True):
+        if not self.interactive_mode:
+            print("You are not in interactive mode.\n")
+            return
+        else:
+            self.selected_actors = []
+
+            if delete_actor:
+                show_actor=False
+            else:
+                show_actor=True
+
+            # Callback for selecting actors
+            def select_actors(actor):
+                self.selected_actors.append(actor.name)
+                print("Selected actor, ", actor.name, "\n")
+                if delete_actor:
+                    self.plotter.remove_actor(actor)
+
+            self.plotter.enable_mesh_picking(callback, use_actor=True, show=show_actor)
+
+            # Also get the camera position as the last position before closing
+            self.interactive_camera_position = []
+
+            # Callback for getting the last camera position
+            def last_frame_info():
+                self.interactive_camera_position.append(self.plotter.camera_position)
+
+            # Interactive window 
+            self.plotter.show(before_close_callback=last_frame_info, auto_close=False)
+
+    def render_image(imagename):
+        """ Renders an image """ 
+        self.plotter.screenshot(imagename)

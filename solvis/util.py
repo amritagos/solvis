@@ -111,9 +111,9 @@ def trim(imagefilename, border_pixels=0):
     #Bounding box given as a 4-tuple defining the left, upper, right, and lower pixel coordinates.
     #If the image is completely empty, this method returns None.
     bbox = diff.getbbox()
-    bbox_borders = (bbox[0]-border_pixels, bbox[1]+border_pixels, bbox[2]+border_pixels, bbox[3]-border_pixels) # crop rectangle, as a (left, upper, right, lower)-tuple.
+    bbox_borders = (bbox[0]-border_pixels, bbox[1]-border_pixels, bbox[2]+border_pixels, bbox[3]+border_pixels) # crop rectangle, as a (left, upper, right, lower)-tuple.
     if bbox:
-        return im.crop(bbox)
+        return im.crop(bbox_borders)
 
 # Merge options, to be used for kwargs and default dictionary values
 # For all options inside default_options, if override has the value, set it

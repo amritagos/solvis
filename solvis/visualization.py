@@ -73,7 +73,7 @@ class AtomicPlotter:
 
         self.plotter.add_mesh(hull, **mesh_options)
 
-    def add_bond(self,pointa, pointb, a_color:str, b_color:str, actor_name:str, radius=0.1, resolution=1,bond_gradient_start=0.0, **mesh_options_override_default):
+    def add_bond(self,pointa, pointb, a_color:str, b_color:str, actor_name:str, radius=0.1, resolution=1, bond_gradient_start=0.0, **mesh_options_override_default):
         """ 
         Plot a bond between two points (say A and B), each of which is a numPy array with the x,y,z coordinates
 
@@ -175,7 +175,7 @@ class AtomicPlotter:
             **mesh_options,
             )
 
-    def create_bonds_from_edges(self, pointset, edges, point_colors=None, single_color=None, 
+    def create_bonds_from_edges(self, pointset, edges, point_colors=None, single_bond_colors=None, 
         radius=0.1, resolution=1,bond_gradient_start=0.0,**mesh_options_override_default):
         """ 
         Create bonds from a list of bonds, using 
@@ -183,15 +183,17 @@ class AtomicPlotter:
         pointset: ndarray of coordinates every point inside pointset
         edges: Bonds such that each index corresponds to a point inside pointset
         point_colors: list of colors corresponding to the color of each point
-        single_color: Color of all bonds. If you set this, it will override point_colors if you set that also 
+        single_bond_colors: Colors corresponding to all bonds. If you set this, point_colors will be ignored 
         radius: Radius of the tube created for the bond (Default 0.1)
         resolution: Resolution of the tube created for the bond (Default 1), see PolyVista tube for more details
         bond_gradient_start: (Default 0.0) Where the mixing of the two colors will start.
         mesh_options_override_default: Arguments in the PyVista add_mesh function,
         that will override the default atom_bond_mesh_options."""
 
-        if single_color is not None:
-            point_colors = [single_color for i in range(len(pointset))]
+        if single_bond_colors is not None:
+            set_single_color = True
+        else:
+            set_single_color = False
 
         for idx, bond in enumerate(edges):
             a_index = bond[0]
@@ -199,8 +201,14 @@ class AtomicPlotter:
             pointa = pointset[a_index]
             pointb = pointset[b_index]
             actor_name = "tube"+str(idx)
+            if set_single_color:
+                colora = single_bond_colors[idx]
+                colorb = colora
+            else:
+                colora = point_colors[a_index] 
+                colorb = point_colors[b_index]
             # Create the bond
-            self.add_bond(pointa, pointb, point_colors[a_index], point_colors[b_index], actor_name, radius, resolution,bond_gradient_start, **mesh_options_override_default)
+            self.add_bond(pointa, pointb, colora, colorb, actor_name, radius, resolution,bond_gradient_start, **mesh_options_override_default)
 
     def interactive_window(self, delete_actor=True):
         if not self.interactive_mode:

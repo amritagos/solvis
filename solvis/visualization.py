@@ -11,7 +11,7 @@ import pyvista as pv
 import matplotlib.pyplot as plt
 from pyvista.plotting.opts import ElementType
 
-from .util import create_two_color_gradient, distance_projected
+from .util import create_two_color_gradient, distance_projected, merge_options
 
 class AtomicPlotter:
     """Plots atoms, bonds and convex hulls using PyVista
@@ -61,7 +61,7 @@ class AtomicPlotter:
             show_scalar_bar=False
             )
 
-    def add_hull(hull:PolyData, **color_or_additional_mesh_options):
+    def add_hull(self,hull:PolyData, **color_or_additional_mesh_options):
         """ 
         TODO: pass it a hull object created in solvis and not the PyVista object
         
@@ -73,7 +73,7 @@ class AtomicPlotter:
 
         self.plotter.add_mesh(hull, **mesh_options)
 
-    def add_bond(pointa, pointb, a_color:str, b_color:str, actor_name:str, radius=0.1, resolution=1,bond_gradient_start=0.0, **mesh_options_override_default):
+    def add_bond(self,pointa, pointb, a_color:str, b_color:str, actor_name:str, radius=0.1, resolution=1,bond_gradient_start=0.0, **mesh_options_override_default):
         """ 
         Plot a bond between two points (say A and B), each of which is a numPy array with the x,y,z coordinates
 
@@ -89,7 +89,7 @@ class AtomicPlotter:
         that will override the default atom_bond_mesh_options. """
 
         # Only override the default options with user-defined options
-        mesh_options = {k: mesh_options_override_default[k] for k in mesh_options_override_default if k in self.atom_bond_mesh_options}
+        mesh_options = merge_options(self.atom_bond_mesh_options, mesh_options_override_default)
 
         # If interactive mode is on, make the bond pickable
         if self.interactive_mode:
@@ -114,7 +114,7 @@ class AtomicPlotter:
         name=actor_name,
         **mesh_options)
 
-    def add_atoms_as_spheres(pointset, colors, radius=0.1, **mesh_options_override_default):
+    def add_atoms_as_spheres(self,pointset, colors, radius=0.1, **mesh_options_override_default):
         """ 
         Plot points (i.e. atoms) as spheres 
 
@@ -125,7 +125,7 @@ class AtomicPlotter:
         that will override the default atom_bond_mesh_options. """
 
         # Only override the default options with user-defined options
-        mesh_options = {k: mesh_options_override_default[k] for k in mesh_options_override_default if k in self.atom_bond_mesh_options}
+        mesh_options = merge_options(self.atom_bond_mesh_options, mesh_options_override_default)
 
         # If interactive mode is on, make the bond pickable
         if self.interactive_mode:
@@ -142,7 +142,7 @@ class AtomicPlotter:
                 **mesh_options,
                 )
 
-    def add_single_atom_as_sphere(point, color:str, actor_name:str=None, radius=0.1, **mesh_options_override_default):
+    def add_single_atom_as_sphere(self, point, color:str, actor_name:str=None, radius=0.1, **mesh_options_override_default):
         """ 
         Plot a single atom as a PyVista Sphere
 
@@ -154,7 +154,7 @@ class AtomicPlotter:
         that will override the default atom_bond_mesh_options. """
 
         # Only override the default options with user-defined options
-        mesh_options = {k: mesh_options_override_default[k] for k in mesh_options_override_default if k in self.atom_bond_mesh_options}
+        mesh_options = merge_options(self.atom_bond_mesh_options, mesh_options_override_default)
 
         # If interactive mode is on, make the bond pickable
         if self.interactive_mode:
@@ -175,7 +175,7 @@ class AtomicPlotter:
             **mesh_options,
             )
 
-    def create_bonds_from_edges(pointset, edges, point_colors=None, single_color=None, 
+    def create_bonds_from_edges(self, pointset, edges, point_colors=None, single_color=None, 
         radius=0.1, resolution=1,bond_gradient_start=0.0,**mesh_options_override_default):
         """ 
         Create bonds from a list of bonds, using 
@@ -200,9 +200,9 @@ class AtomicPlotter:
             pointb = pointset[b_index]
             actor_name = "tube"+str(idx)
             # Create the bond
-            add_bond(pointa, pointb, point_colours[a_index], point_colours[b_index], actor_name, radius, resolution,bond_gradient_start, **mesh_options_override_default)
+            self.add_bond(pointa, pointb, point_colors[a_index], point_colors[b_index], actor_name, radius, resolution,bond_gradient_start, **mesh_options_override_default)
 
-    def interactive_window(delete_actor=True):
+    def interactive_window(self, delete_actor=True):
         if not self.interactive_mode:
             print("You are not in interactive mode.\n")
             return
@@ -221,18 +221,30 @@ class AtomicPlotter:
                 if delete_actor:
                     self.plotter.remove_actor(actor)
 
-            self.plotter.enable_mesh_picking(callback, use_actor=True, show=show_actor)
+            self.plotter.enable_mesh_picking(select_actors, use_actor=True, show=show_actor)
 
             # Also get the camera position as the last position before closing
             self.interactive_camera_position = []
 
+            # Key event for camera positions 
+            # Key s
+            def save_cam_pos():
+                self.interactive_camera_position.append(self.plotter.camera.position)
+
+            # Add key event to the plotter 
+            self.plotter.add_key_event("s", save_cam_pos)
+
             # Callback for getting the last camera position
-            def last_frame_info():
-                self.interactive_camera_position.append(self.plotter.camera_position)
+            def last_frame_info(plotter):
+                self.interactive_camera_position.append(plotter.camera_position)
 
             # Interactive window 
             self.plotter.show(before_close_callback=last_frame_info, auto_close=False)
 
-    def render_image(imagename):
-        """ Renders an image """ 
+    def render_image(self, imagename, camera_position=None):
+        """ Renders an image, optionally with the user-defined camera position"""
+        if camera_position is not None:
+            self.plotter.camera_position = camera_position
+            self.plotter.camera_set = True 
+        # Take the screenshot 
         self.plotter.screenshot(imagename)

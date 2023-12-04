@@ -15,6 +15,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import matplotlib.pyplot as plt
 from pyvista.plotting.opts import ElementType 
 import solvis
+from solvis.visualization import AtomicPlotter
 
 # Input filename 
 infilename = '../../resources/single_capped_trigonal_prism_unwrapped.lammpstrj'
@@ -22,9 +23,14 @@ infilename = '../../resources/single_capped_trigonal_prism_unwrapped.lammpstrj'
 fe_type = 3
 h_type = 2
 o_type = 1
+imagename = "nonoctahedral.png"
+trimmed_img_name = "trimmed.png"
 
+# Bond and atom appearance 
 # Decide what kind of gradient shading you want for bonds 
 bond_gradient_start = 0.3
+bond_radius = 0.1
+atom_radius = 0.1 
 
 # ------------------------------------------------------
 # Glean the coordinates from the LAMMPS trajectory file 
@@ -40,8 +46,7 @@ fake_center = np.mean(pos, axis=0)
 box_len = currentframe.get_cell_lengths_and_angles()[:3]
 # 7 Nearest neighbours
 k=7
-dist, neigh_ind = solvis.k_nearest_neighbours(pos, fake_center, k, box_len)
-k_near_pos = pos[neigh_ind]
+dist, k_near_pos = solvis.util.k_nearest_neighbours(pos, fake_center, k, box_len)
 
 # Get the convex hull using the scipy wrapper for QHull
 hull = ConvexHull(k_near_pos)
@@ -50,6 +55,10 @@ num_faces = len(hull.simplices)
  
 area = hull.area
 vol = hull.volume 
+
+# Calculate the sphericity from the volume and area 
+sph_value = solvis.util.sphericity(vol,area)
+print('The calculated sphericity with 7 neighbours is', sph_value, '\n')
 
 # Convert the convex hull into a pyvista PolyData object
 faces_pyvistaformat = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
@@ -67,96 +76,42 @@ for simplex in faces:
 
 edges = np.array(list(edges))
 
-# TODO TODO TODO
+# ------------------------------------------------------------
 
+mesh_cmap = solvis.util.create_two_color_gradient("#3737d2", "red", gradient_start=0.0) # blue to red gradient
 
 # For interactive plotting 
-pl = pv.Plotter(off_screen=False) #  window_size=[4000,4000]
-pl.image_scale = 4
-
-pl.set_background("white") # Background 
-# Colour the mesh faces according to the distance from the center 
-# matplotlib_cmap = plt.cm.get_cmap("coolwarm") # Get the colormap from matplotlib
-# colors = ["blue", "red"]
-colors = ["#3737d2", "red"]
-matplotlib_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
-# Add the convex hull 
-pl.add_mesh(polyhull, 
-    cmap=matplotlib_cmap, 
-    clim=[dist[4],dist[-1]], 
-    scalars=dist,
-    show_scalar_bar=False,
-    pickable=False,
-    **shell_mesh_options)
-
+pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=True)
+# Add the hull as a mesh 
+pl_inter.add_hull(polyhull,cmap=mesh_cmap,clim=[dist[4],dist[-1]],scalars=dist)
 # Create the bonds corresponding to the edges and add them to the plotter
-# Use matplotlib colors for points and bonds!
-point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]# Don't hard code darkblue midnightblue
-pl = create_bonds_from_edges(pl, polyhull, edges, point_colours=point_colours, bond_gradient_start=bond_gradient_start,**bond_mesh_options)
+point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]
+pl_inter.create_bonds_from_edges(k_near_pos, edges, point_colors=point_colours,
+    radius=bond_radius, resolution=1,bond_gradient_start=bond_gradient_start)
+# Add the atoms as spheres
+pl_inter.add_atoms_as_spheres(k_near_pos, point_colours, radius=atom_radius)
+# Remove bonds or atoms interactively
+pl_inter.interactive_window(delete_actor=True) 
 
-# ------------------------------------
-# Remove bonds (actors), which are individual meshes 
+# ---------------------------
+# Now render the image (offscreen=True)
 
-remove_bonds = []
+pl_render = AtomicPlotter(interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=True)
+# Add the hull as a mesh 
+pl_render.add_hull(polyhull, cmap=mesh_cmap,clim=[dist[4],dist[-1]],scalars=dist)
+# Create the bonds corresponding to the edges and add them to the plotter
+pl_render.create_bonds_from_edges(k_near_pos, edges, point_colors=point_colours,
+    radius=bond_radius, resolution=1,bond_gradient_start=bond_gradient_start)
+# Delete actors selected interactively 
+pl_render.plotter.remove_actor(pl_inter.selected_actors)
+# Add the atoms as spheres
+pl_render.add_atoms_as_spheres(k_near_pos, point_colours, radius=atom_radius)
+# Get and set the camera position found from the last frame in the interactive mode
+inter_cpos = pl_inter.interactive_camera_position[-1]
+print("Camera position will be set to ", inter_cpos)
+# Save image 
+pl_render.render_image(imagename, inter_cpos)
 
-def callback(actor):
-    remove_bonds.append(actor.name)
-    print("Removed actor, ", actor.name, "\n")
-
-pl.enable_mesh_picking(callback, use_actor=True, show=True)
-
-# ------------------------------------
-
-cam_positions = [pl.camera_position] # Camera positions we want to render later?
-
-# In order to take the last screenshot and save it to an image
-def last_frame_info(plotter, cam_pos, outfilename=None):
-    if outfilename is not None:
-        plotter.screenshot(outfilename)
-    cam_positions.append(plotter.camera_position)
- 
-pl.show(before_close_callback=lambda pl: last_frame_info(pl,cam_positions), auto_close=False)
-# -------------------------------------------------
-# Create a separate render image 
-pl_render = pv.Plotter(off_screen=True, window_size=[4000,4000])
-pl_render.set_background("white") # Background 
-pl_render.enable_depth_peeling(10)
-pl_render.enable_shadows()
-
-# Colour the mesh faces according to the distance from the center 
-pl_render.add_mesh(polyhull, 
-    cmap=matplotlib_cmap, 
-    clim=[dist[4],dist[-1]], 
-    scalars=dist,
-    show_scalar_bar=False,
-    **shell_mesh_options) 
-
-# Create the bonds from the edges
-pl_render = create_bonds_from_edges(pl_render, polyhull, edges, point_colours=point_colours, bond_gradient_start=bond_gradient_start,**bond_mesh_options)
-# Remove the bonds 
-pl_render.remove_actor(remove_bonds)
-
-# Add the atoms as spheres 
-pl_render = add_atoms(pl_render, k_near_pos, point_colours, radius=0.1, **atom_mesh_options)
-
-pl_render.camera_position = cam_positions[-1]
-pl_render.camera_set = True
-print("Camera position set to ", pl_render.camera_position)
-pl_render.screenshot("nonoctahedral.png")
-
-from PIL import Image, ImageChops
-
-def trim(im, border_pixels=0):
-    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
-    diff = ImageChops.difference(im, bg)
-    diff = ImageChops.add(diff, diff, 2.0, 0)
-    #Bounding box given as a 4-tuple defining the left, upper, right, and lower pixel coordinates.
-    #If the image is completely empty, this method returns None.
-    bbox = diff.getbbox()
-    bbox_borders = (bbox[0]-border_pixels, bbox[1]+border_pixels, bbox[2]+border_pixels, bbox[3]-border_pixels) # crop rectangle, as a (left, upper, right, lower)-tuple.
-    if bbox:
-        return im.crop(bbox)
-
-bg = Image.open("nonoctahedral.png")
-trimmed_im = trim(bg,10)
-trimmed_im.save("trimmed.png")
+# Trim the image
+trimmed_im = solvis.util.trim(imagename,10)
+trimmed_im.save(trimmed_img_name)

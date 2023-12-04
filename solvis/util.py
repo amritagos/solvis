@@ -2,6 +2,7 @@ import numpy as np
 import math 
 from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageChops
+from scipy.spatial import KDTree
 
 def minimum_image_shift(point, reference, box_dimensions):
     """
@@ -90,7 +91,7 @@ def create_two_color_gradient(color1:str, color2:str, gradient_start=0.0):
         colors = [color1, color2]
         m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
     elif gradient_start>0.0 and gradient_start<=0.5:
-        nodes = [0.0, bond_gradient_start, 1.0-bond_gradient_start, 1.0]
+        nodes = [0.0, gradient_start, 1.0-gradient_start, 1.0]
         colors = [color1, color1, color2, color2]
         m_cmap = LinearSegmentedColormap.from_list("mycmap", list(zip(nodes,colors)))
     else:
@@ -102,7 +103,8 @@ def create_two_color_gradient(color1:str, color2:str, gradient_start=0.0):
     return m_cmap
 
 # Trim an image with some tolerance 
-def trim(im, border_pixels=0):
+def trim(imagefilename, border_pixels=0):
+    im = Image.open(imagefilename)
     bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
     diff = ImageChops.difference(im, bg)
     diff = ImageChops.add(diff, diff, 2.0, 0)
@@ -112,3 +114,15 @@ def trim(im, border_pixels=0):
     bbox_borders = (bbox[0]-border_pixels, bbox[1]+border_pixels, bbox[2]+border_pixels, bbox[3]-border_pixels) # crop rectangle, as a (left, upper, right, lower)-tuple.
     if bbox:
         return im.crop(bbox)
+
+# Merge options, to be used for kwargs and default dictionary values
+# For all options inside default_options, if override has the value, set it
+# or else keep the default_options value. Ignore all other keys inside override 
+def merge_options(default_options, override):
+    result = {}
+    for key in default_options:
+        if key in override:
+            result[key] = override[key]
+        else:
+            result[key] = default_options[key]
+    return result

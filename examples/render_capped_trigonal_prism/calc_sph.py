@@ -81,6 +81,7 @@ edges = np.array(list(edges))
 mesh_cmap = solvis.util.create_two_color_gradient("#3737d2", "red", gradient_start=0.0) # blue to red gradient
 
 # For interactive plotting 
+# NOTE: Shadows and opacity won't work together without pbr 
 pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=True)
 # Add the hull as a mesh 
 pl_inter.add_hull(polyhull,cmap=mesh_cmap,clim=[dist[4],dist[-1]],scalars=dist)

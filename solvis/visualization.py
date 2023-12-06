@@ -11,7 +11,7 @@ import pyvista as pv
 import matplotlib.pyplot as plt
 from pyvista.plotting.opts import ElementType
 
-from .util import create_two_color_gradient, distance_projected, merge_options
+from .util import create_two_color_gradient, distance_projected, merge_options, create_asymmetric_two_color_gradient
 
 class AtomicPlotter:
     """Plots atoms, bonds and convex hulls using PyVista
@@ -73,7 +73,7 @@ class AtomicPlotter:
 
         self.plotter.add_mesh(hull, **mesh_options)
 
-    def add_bond(self,pointa, pointb, a_color:str, b_color:str, actor_name:str, radius=0.1, resolution=1, bond_gradient_start=0.0, **mesh_options_override_default):
+    def add_bond(self,pointa, pointb, a_color:str, b_color:str, actor_name:str, radius=0.1, resolution=1, bond_gradient_start=0.0, asymmetric_gradient_start=None,**mesh_options_override_default):
         """ 
         Plot a bond between two points (say A and B), each of which is a numPy array with the x,y,z coordinates
 
@@ -85,6 +85,7 @@ class AtomicPlotter:
         radius: Radius of the tube created for the bond (Default 0.1)
         resolution: Resolution of the tube created for the bond (Default 1), see PolyVista tube for more details
         bond_gradient_start: (Default 0.0) Where the mixing of the two colors will start.
+        asymmetric_gradient_start: If this is set, then the colormap is not split equally between two colors. Should be in between 0 and 1 
         mesh_options_override_default: Arguments in the PyVista add_mesh function,
         that will override the default atom_bond_mesh_options. """
 
@@ -96,7 +97,11 @@ class AtomicPlotter:
             mesh_options.update({"pickable":True})
 
         # Create the colormap to be used for bond colouring
-        m_cmap = create_two_color_gradient(a_color, b_color, bond_gradient_start)
+        if asymmetric_gradient_start is None:
+            # Symmetric gradient 
+            m_cmap = create_two_color_gradient(a_color, b_color, bond_gradient_start)
+        else:
+            m_cmap = create_asymmetric_two_color_gradient(a_color, b_color, asymmetric_gradient_start)
 
         # Each tube is between the two input points 
         tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=resolution, radius=radius, n_sides=15)
@@ -176,7 +181,7 @@ class AtomicPlotter:
             )
 
     def create_bonds_from_edges(self, pointset, edges, point_colors=None, single_bond_colors=None, 
-        radius=0.1, resolution=1,bond_gradient_start=0.0,**mesh_options_override_default):
+        radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, **mesh_options_override_default):
         """ 
         Create bonds from a list of bonds, using 
 
@@ -187,6 +192,7 @@ class AtomicPlotter:
         radius: Radius of the tube created for the bond (Default 0.1)
         resolution: Resolution of the tube created for the bond (Default 1), see PolyVista tube for more details
         bond_gradient_start: (Default 0.0) Where the mixing of the two colors will start.
+        asymmetric_gradient_start: If you want an asymmetric bond gradient 
         mesh_options_override_default: Arguments in the PyVista add_mesh function,
         that will override the default atom_bond_mesh_options."""
 
@@ -208,7 +214,44 @@ class AtomicPlotter:
                 colora = point_colors[a_index] 
                 colorb = point_colors[b_index]
             # Create the bond
-            self.add_bond(pointa, pointb, colora, colorb, actor_name, radius, resolution,bond_gradient_start, **mesh_options_override_default)
+            self.add_bond(pointa, pointb, colora, colorb, actor_name, radius, resolution,
+                bond_gradient_start, asymmetric_gradient_start, **mesh_options_override_default)
+
+    def create_bonds_to_point(self, pointset, central_point, point_colors=None, central_point_color=None,single_bond_colors=None, 
+        radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, **mesh_options_override_default):
+        """ 
+        Create bonds from of each point in a list of points, to a particular point 
+
+        pointset: ndarray of coordinates every point inside pointset,to be bonded to a given point (called central_point here)
+        central_point: Point to be bonded to
+        point_colors: list of colors corresponding to the color of each point inside pointset
+        central_point_color : You must set this to some color if using point_colors 
+        single_bond_colors: Colors corresponding to all bonds. If you set this, point_colors will be ignored 
+        radius: Radius of the tube created for the bond (Default 0.1)
+        resolution: Resolution of the tube created for the bond (Default 1), see PolyVista tube for more details
+        bond_gradient_start: (Default 0.0) Where the mixing of the two colors will start.
+        asymmetric_gradient_start: If you want an asymmetric bond gradient 
+        mesh_options_override_default: Arguments in the PyVista add_mesh function,
+        that will override the default atom_bond_mesh_options."""
+
+        if single_bond_colors is not None:
+            set_single_color = True
+        else:
+            set_single_color = False
+            if central_point_color is None:
+                central_point_color="black"
+
+        for idx, point in enumerate(pointset):
+            actor_name = "tube"+str(idx)
+            if set_single_color:
+                colora = single_bond_colors[idx]
+                colorb = colora
+            else:
+                colora = central_point_color
+                colorb = point_colors[idx]
+            # Create the bond
+            self.add_bond(central_point, point, colora, colorb, actor_name, radius, resolution,
+                bond_gradient_start, asymmetric_gradient_start, **mesh_options_override_default)
 
     def interactive_window(self, delete_actor=True):
         if not self.interactive_mode:

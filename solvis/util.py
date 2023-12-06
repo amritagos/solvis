@@ -102,6 +102,36 @@ def create_two_color_gradient(color1:str, color2:str, gradient_start=0.0):
 
     return m_cmap
 
+def create_asymmetric_two_color_gradient(color1:str, color2:str, gradient_start=0.1):
+    """
+    Create and return a matplotlib color gradient, given two colours (the same colour)
+    is fine too. 
+
+    Parameters:
+    - color1: Any valid matplotlib color
+    - color2: The second matplotlib color the gradient goes up to 
+    - gradient_start: Where the mixing of the two colors will start. By default, this is 0.1
+    Valid input are numbers from 0 to 1.0, not included
+
+    Returns:
+    - colormap: Matplotlib colormap.
+
+    """
+    if gradient_start==0.0:
+        colors = [color1, color2]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+    elif gradient_start>0.0 and gradient_start<1.0:
+        nodes = [0.0, gradient_start, 1.0]
+        colors = [color1, color2, color2]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", list(zip(nodes,colors)))
+    else:
+        # Print warning
+        print("You entered an invalid value of gradient_start= ", gradient_start,"for creating an asymmetric two-color gradient\n Reverting to smooth gradient.\n")
+        colors = [color1, color2]
+        m_cmap = LinearSegmentedColormap.from_list("mycmap", colors)
+
+    return m_cmap
+
 # Trim an image with some tolerance 
 def trim(imagefilename, border_pixels=0):
     im = Image.open(imagefilename)

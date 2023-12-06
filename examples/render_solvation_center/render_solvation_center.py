@@ -24,7 +24,7 @@ trimmed_img_name = "trimmed.png"
 
 # Bond and atom appearance 
 # Decide what kind of gradient shading you want for bonds 
-bond_gradient_start = 0.0
+set_gradient = 0.5 # Asymmetric bond gradient , not used here 
 bond_radius = 0.15
 atom_radius = 0.2
 fe_center_radius = 0.3
@@ -75,46 +75,41 @@ print('The calculated sphericity with 6 neighbours is', sph_value, '\n')
 faces_pyvistaformat = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
 polyhull = PolyData(k_near_pos, faces_pyvistaformat)
 
-edges = []
-
-# Get the bonds between the central atom (index 0) and the remaining solvent atoms
-for i in range(len(solvent_pos)):
-    edges.append([0,i+1])
-
-edges = np.array(edges)
-
 # ------------------------------------------------------------
 
 hull_color = "#c7c7c7"
-point_colours = ["black","midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]
-bond_colours = point_colours[1:]
+solvent_point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]
+central_point_colour = "black"
 
 # For interactive plotting 
-pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=True)
+pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)
 # Add the hull as a mesh 
-pl_inter.add_hull(polyhull,color=hull_color, show_edges=True, line_width=4, lighting=True, opacity=0.9)
+pl_inter.add_hull(polyhull,color=hull_color, show_edges=True, line_width=5, lighting=True, opacity=0.5)
 # Create the bonds corresponding to the edges and add them to the plotter
-pl_inter.create_bonds_from_edges(all_pos, edges, single_bond_colors=bond_colours,
-    radius=bond_radius, resolution=1,bond_gradient_start=bond_gradient_start)
-pl_inter.add_atoms_as_spheres(all_pos[1:], point_colours[1:], radius=atom_radius)
+# pl_inter.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, point_colors=solvent_point_colours, central_point_color=central_point_colour,
+#     radius=bond_radius, resolution=1,asymmetric_gradient_start=set_gradient)
+# If you want single color bonds 
+pl_inter.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, single_bond_colors=solvent_point_colours,
+    radius=bond_radius, resolution=1)
+pl_inter.add_atoms_as_spheres(solvent_pos, solvent_point_colours, radius=atom_radius)
 # Add the Fe solvation center as a sphere with a different size 
-pl_inter.add_single_atom_as_sphere(all_pos[0], point_colours[0], radius=fe_center_radius)
+pl_inter.add_single_atom_as_sphere(fe_pos_query_pnt, central_point_colour, radius=fe_center_radius, actor_name="center")
 # Open the interactive window 
 pl_inter.interactive_window(delete_actor=True) 
 
 # ---------------------------
 # Now render the image (offscreen=True)
 
-pl_render = AtomicPlotter(interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=True)
+pl_render = AtomicPlotter(interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=False)
 # Add the hull as a mesh 
-pl_render.add_hull(polyhull, color=hull_color, show_edges=True, line_width=4, lighting=True, opacity=0.9)
+pl_render.add_hull(polyhull,color=hull_color, show_edges=True, line_width=5, lighting=True, opacity=0.5)
 # Create the bonds corresponding to the edges and add them to the plotter
-pl_render.create_bonds_from_edges(all_pos, edges, single_bond_colors=bond_colours,
-    radius=bond_radius, resolution=1,bond_gradient_start=bond_gradient_start)
+pl_render.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, single_bond_colors=solvent_point_colours,
+    radius=bond_radius, resolution=1)
 # Add the solvent atoms as spheres
-pl_render.add_atoms_as_spheres(all_pos[1:], point_colours[1:], radius=atom_radius)
+pl_render.add_atoms_as_spheres(solvent_pos, solvent_point_colours, radius=atom_radius)
 # Add the Fe solvation center as a sphere with a different size 
-pl_render.add_single_atom_as_sphere(all_pos[0], point_colours[0], radius=fe_center_radius)
+pl_render.add_single_atom_as_sphere(fe_pos_query_pnt, central_point_colour, radius=fe_center_radius, actor_name="center")
 # Get and set the camera position found from the last frame in the interactive mode
 inter_cpos = pl_inter.interactive_camera_position[-1]
 print("Camera position will be set to ", inter_cpos)

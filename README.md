@@ -33,3 +33,5 @@ Each example is self-contained. Go into the example directory and run the script
 ## Image Gallery
 
 <img src="resources/non_octahedral_shape.png" width="200" />
+
+<img src="resources/octahedral_shell.png" width="200" />

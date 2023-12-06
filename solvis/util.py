@@ -24,6 +24,27 @@ def minimum_image_shift(point, reference, box_dimensions):
     shifted_point = reference + delta
     return shifted_point
 
+def get_first_timesteps(dump_file):
+    """
+    Get the timesteps from the LAMMPS trajectory file, since ASE
+    does not read this in directly
+
+    Parameters:
+    - dump_file: Path to the LAMMPS trajectory file, must be in human-readable dump format
+
+    Returns:
+    - Values of the first two timesteps 
+    """
+    times = []
+    with open(dump_file, 'r') as f:
+        for line in f:
+            if line.strip() == "ITEM: TIMESTEP":
+                timestep_val = int(next(f).strip())
+                times.append(timestep_val)
+                if len(times)==2:
+                    break
+    return times
+
 def sphericity(vol,area):
     """
     Calculate the sphericity, from the volume and area of the hull  
@@ -57,6 +78,32 @@ def k_nearest_neighbours(data, query_pnt, k, box_dimensions=None):
     dist, neigh_ind = kdtree.query(query_pnt,k)
 
     return (dist,data[neigh_ind])
+
+def nearest_neighbours_within_cutoff(data, query_pnt, cutoff, box_dimensions=None):
+    """
+    Return number of nearest neighbours within a cutoff, from a given query point 
+    given a query point. 
+    
+    Parameters:
+    - data: Coordinates of points to be searched for neighbours.
+    - query_pnt: Coordinates of central 'query' point from nearest neighbours will be calculated.
+    - cutoff: Distance cutoff 
+    - box_dimensions: List or array of box dimensions [lx, ly, lz].
+
+    Returns:
+    - coord_num: Number of neighbours within the cutoff 
+
+    """
+    # Create the KDTree using data
+    if box_dimensions is not None:
+        kdtree = KDTree(data, boxsize=box_dimensions)
+    else:
+        kdtree = KDTree(data) # no periodic boundary conditions 
+
+    # Find the coordination number within a cutoff 
+    coord_num = kdtree.query_ball_point(query_pnt,r=cutoff,return_length=True)
+
+    return coord_num
 
 def distance_projected(pointa, pointb, pointc, pointd):
     # Calculate the direction vector of the line defined by C and D

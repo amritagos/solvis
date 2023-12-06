@@ -2,29 +2,22 @@ from ase import Atom, Atoms
 from ase.data import chemical_symbols
 from ase.io import lammpsdata, read 
 import numpy as np
-from scipy.spatial import ConvexHull, Delaunay
-from scipy.spatial import KDTree
-import math 
-import pandas as pd
+from scipy.spatial import ConvexHull
 from pathlib import Path 
-from os import listdir
-from os.path import isfile, join
 from pyvista import PolyData
-import pyvista as pv
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
-import matplotlib.pyplot as plt
-from pyvista.plotting.opts import ElementType 
+
 import solvis
 from solvis.visualization import AtomicPlotter
 
 # Input filename 
-infilename = '../../resources/single_capped_trigonal_prism_unwrapped.lammpstrj'
+script_dir = script_dir = Path(__file__).resolve().parent
+infilename = script_dir / '../../resources/single_capped_trigonal_prism_unwrapped.lammpstrj'
 # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
 fe_type = 3
 h_type = 2
 o_type = 1
-imagename = "nonoctahedral.png"
-trimmed_img_name = "trimmed.png"
+imagename = script_dir / "nonoctahedral.png"
+trimmed_img_name = script_dir / "trimmed.png"
 
 # Bond and atom appearance 
 # Decide what kind of gradient shading you want for bonds 
@@ -79,6 +72,7 @@ edges = np.array(list(edges))
 # ------------------------------------------------------------
 
 mesh_cmap = solvis.util.create_two_color_gradient("#3737d2", "red", gradient_start=0.0) # blue to red gradient
+point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]
 
 # For interactive plotting 
 # NOTE: Shadows and opacity won't work together without pbr 
@@ -86,7 +80,6 @@ pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=True
 # Add the hull as a mesh 
 pl_inter.add_hull(polyhull,cmap=mesh_cmap,clim=[dist[4],dist[-1]],scalars=dist)
 # Create the bonds corresponding to the edges and add them to the plotter
-point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]
 pl_inter.create_bonds_from_edges(k_near_pos, edges, point_colors=point_colours,
     radius=bond_radius, resolution=1,bond_gradient_start=bond_gradient_start)
 # Add the atoms as spheres

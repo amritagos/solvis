@@ -3,24 +3,21 @@ from ase.data import chemical_symbols
 from ase.io import lammpsdata, read 
 import numpy as np
 from scipy.spatial import ConvexHull
-import math 
-import pandas as pd
 from pathlib import Path 
-from os import listdir
-from os.path import isfile, join
 from pyvista import PolyData
-import pyvista as pv 
+
 import solvis
 from solvis.visualization import AtomicPlotter
 
 # Input filename 
-infilename = '../../resources/octahedral_solvation_shell.lammpstrj'
+script_dir = Path(__file__).resolve().parent
+infilename = script_dir / '../../resources/octahedral_solvation_shell.lammpstrj'
 # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
 fe_type = 3
 h_type = 2
 o_type = 1
-imagename = "octahedral_shell.png"
-trimmed_img_name = "trimmed.png"
+imagename = script_dir / "octahedral_shell.png"
+trimmed_img_name = script_dir / "trimmed.png"
 
 # Bond and atom appearance 
 # Decide what kind of gradient shading you want for bonds 

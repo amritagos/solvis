@@ -10,7 +10,7 @@ import solvis
 from solvis.visualization import AtomicPlotter
 
 # Input filename 
-script_dir = script_dir = Path(__file__).resolve().parent
+script_dir = Path(__file__).resolve().parent
 infilename = script_dir / '../../resources/single_capped_trigonal_prism_unwrapped.lammpstrj'
 # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
 fe_type = 3

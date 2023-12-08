@@ -30,6 +30,18 @@ Each example is self-contained. Go into the example directory and run the script
 
 - *sphericity_calc_traj*: Calculation of sphericity values for a convex hull surrounding each Fe ion, starting from a LAMMPS trajectory file with multiple frames. The coordination number within a cutoff is also calculated. The system has O,H,Fe, and Cl atoms with atom types 1, 2, 3,4, respectively. A text output file is written out containing sphericity values. This script will work even if there are multiple ion centers in the trajectory file. WARNING: However, this script will fail if a trajectory has only one frame.
 
+## Tests
+
+To run tests (which are inside the `tests` directory), written with `pytest`, run the following command from the top-level directory: 
+
+```bash
+pytest
+```
+
+In order to debug tests using `pdb`, you can write the command `breakpoint()` inside the `Python` files (in `tests`) wherever you want to set a breakpoint. Then, run `pytest --pdb`. This will stop the code at the line where you put the `breakpoint()` command. 
+
+To see more verbose output from `pytest`, including tests that pass, you can run `pytest -rA`.
+
 ## Image Gallery
 
 <img src="resources/non_octahedral_shape.png" width="200" />

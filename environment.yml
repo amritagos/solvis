@@ -18,13 +18,13 @@ dependencies:
   - pandas 
   - pyvista==0.43.0
   # Dependencies for pyvista
-  - vtk
-  - pillow== 9.0.0
-  - imageio == 2.31.5
+  - vtk==9.2.6
+  - pillow==10.0.1
+  - imageio==2.31.5
   - pooch==1.8.0
   - scooby==0.9.2
   # Packaging
-  - flit
+  - flit==3.9.0
   - pytest==6.2.5
   - coverage==6.1.1
   - pytest-cov==3.0.0
@@ -34,7 +34,7 @@ dependencies:
   - isort==5.9.3
   - autoflake==1.4
   - flake8-docstrings==1.6.0
-  - invoke 
+  - invoke==1.7.3 
   - pip:
     # works for regular pip packages
     - lammps-logfile

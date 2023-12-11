@@ -7,7 +7,7 @@ class System:
         self.atoms = atoms
         self.bonds = []
         # Box lengths in all three dimensions 
-        self.box = currentframe.get_cell_lengths_and_angles()[:3]
+        self.box = atoms.cell.cellpar()[:3]
 
     def create_solvation_shell(self, central_pnt_pos, solvent_atom_types, num_neighbours=6):
         from .solvation_shell import SolvationShell

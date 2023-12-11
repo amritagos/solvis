@@ -41,7 +41,7 @@ fe_ind = currentframe.symbols.search(chemical_symbols[fe_type])
 fe_pos_query_pnt = currentframe.get_positions()[fe_ind[0]]
 
 # Box size lengths 
-box_len = currentframe.get_cell_lengths_and_angles()[:3]
+box_len = currentframe.cell.cellpar()[:3]
 
 # Nearest neighbours
 k = 7

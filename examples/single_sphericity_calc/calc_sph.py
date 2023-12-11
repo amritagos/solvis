@@ -19,8 +19,11 @@ o_type = 1
 # ------------------------------------------------------
 # Glean the coordinates from the LAMMPS trajectory file
 
+traj = read(infilename, format="lammps-dump-text", index=':') # Read in the trajectory
+num_frames = len(traj) # There is only one frame in the trajectory 
+
 # Read in the current frame 
-currentframe = read(infilename, format="lammps-dump-text") # Read in the last frame of the trajectory
+currentframe = traj[-1] # The last frame (there's only one frame in the trajectory)
 # The sphericity should be 0.805005
 ref_value = 0.805005
 

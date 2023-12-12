@@ -61,7 +61,7 @@ class System:
 
         if not self.is_expanded_box:
             print("You cannot expand the box unless you allow it\n")
-            return
+            return neigh_atoms
 
         added_new_atoms = False
         unwrapped_atoms = Atoms()
@@ -91,7 +91,25 @@ class System:
         else:
             return neigh_atoms
 
-    def create_solvation_shell(self, central_pnt_pos, solvent_atom_types, num_neighbours=6):
+    def create_solvation_shell(self, central_pnt, solvent_atom_types='all', num_neighbours=6):
         from .solvation_shell import SolvationShell
-        subset_atoms = self.atoms[atom_indices]
-        return SolvationShell(subset_atoms, self.bonds)
+        if type(central_pnt) is int:
+            central_pnt_pos = self.atoms.get_positions()[central_pnt]
+        elif type(central_pnt) is np.ndarray:
+            central_pnt_pos = central_pnt
+        else:
+            print("You've used an invalid value for the central_pnt argument\n")
+            return
+        # Get the Atoms object with all the solvent positions
+        if solvent_atom_types=='all':
+            solvent_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise 
+            solvent_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in solvent_atom_types]]
+
+        # Find the k-nearest neighbours from the central point
+        dist, neigh_ind = solvis.util.k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours, self.box_lengths)
+        # Get an Atoms object with the neighbours
+        neigh_atoms = self.add_expanded_box_atoms(central_pnt, solvent_atoms[neigh_ind])
+        
+        return SolvationShell(neigh_atoms, expand_box=False)

@@ -3,9 +3,7 @@ from .system import System
 
 class SolvationShell(System):
     """
-    Takes the type of the central atom (in LAMMPS there are integral numbers) and the solvent atom type
-    along with ASE atoms and bonds (bonds may be empty). This should be initialized such that there are not multiple ions
-    If there are multiple atoms with the central atom type, print a warning   
+    In a solvation shell, the atoms will now refer to solvent atoms.    
     """
     def __init__(self, atoms: Atoms, bonds):
         super().__init__(atoms)

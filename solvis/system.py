@@ -36,7 +36,7 @@ class System:
         """
         # Check for uniqueness 
         if len(set(self.atoms.get_tags())) != len(self.atoms):
-            [atom.set_tags([index + 1]) for index, atom in enumerate(self.atoms)]
+            self.atoms.set_tags([index + 1 for index, _ in enumerate(self.atoms)])
 
     def _shift_all_positions_into_box(self):
         """
@@ -67,28 +67,29 @@ class System:
         unwrapped_atoms = Atoms()
 
         for index,atom in enumerate(neigh_atoms):
-            # Get the position, wrapped into the simulation box
-            wrapped_position = minimum_image_shift(atom.position, query_pnt, self.box_lengths)
-            if np.linalg.norm(wrapped_position - position) > 1e-5:  # Adjust this threshold if needed
-                # Add the wrapped atom to self.expanded_atoms with an updated tag
-                new_atom = self.atoms[index].copy()
-                new_atom.set_tags([self.next_expanded_tag])
-                self.expanded_atoms.append(wrapped_atom)
+            # Get the position, unwrapped and with respect to the query point
+            unwrapped_position = minimum_image_shift(atom.position, query_pnt, self.box_lengths)
+            if np.linalg.norm(unwrapped_position - atom.position) > 1e-5:  # Adjust this threshold if needed
+                # Add the new atom to self.expanded_atoms with an updated tag
+                new_atom = atom
+                new_atom.position = unwrapped_position
+                new_atom.tag = self.next_expanded_tag
+                self.expanded_atoms.append(new_atom)
 
                 # Update the next available tag for expanded_atoms
                 self.next_expanded_tag += 1
 
                 added_new_atoms = True # Set this flag
-                unwrapped_atoms.append(wrapped_atom)
+                unwrapped_atoms.append(new_atom)
             else:
                 unwrapped_atoms.append(atom)
 
-            if added_new_atoms:
-                # Rearrage the expanded atom tags 
-                self.expanded_tag_manager.rearrange_atoms(self.expanded_atoms)
-                return unwrapped_atoms
-            else:
-                return neigh_atoms
+        if added_new_atoms:
+            # Rearrage the expanded atom tags 
+            self.expanded_tag_manager.update_tag_index_mapping(self.expanded_atoms)
+            return unwrapped_atoms
+        else:
+            return neigh_atoms
 
     def create_solvation_shell(self, central_pnt_pos, solvent_atom_types, num_neighbours=6):
         from .solvation_shell import SolvationShell

@@ -10,7 +10,7 @@ class AtomTagManager:
         """
         return {atom.tag: (index, atom.tag) for index, atom in enumerate(atoms)}
 
-    def _update_tag_index_mapping(self, atoms):
+    def update_tag_index_mapping(self, atoms):
         """
         Update the dictionary mapping tags to indices and vice versa based on the order of Atom objects in the Atoms object.
         """
@@ -27,10 +27,3 @@ class AtomTagManager:
         Look up the tag of the Atom object at the specified index.
         """
         return self.tag_index_mapping.get(index, (None, None))[1]
-
-    def rearrange_atoms(self, atoms):
-        """
-        Rearrange the order of Atom objects in the Atoms object and update the mappings.
-        """
-        atoms.reverse()
-        self._update_tag_index_mapping(atoms)

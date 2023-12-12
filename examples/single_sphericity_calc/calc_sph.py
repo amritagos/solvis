@@ -26,6 +26,7 @@ num_frames = len(traj) # There is only one frame in the trajectory
 currentframe = traj[-1] # The last frame (there's only one frame in the trajectory)
 # The sphericity should be 0.805005
 ref_value = 0.805005
+breakpoint()
 
 # Delete the H atoms (In this example there are no H atoms, but still) 
 del currentframe[[atom.index for atom in currentframe if atom.number==h_type]]

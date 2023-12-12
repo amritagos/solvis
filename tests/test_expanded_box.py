@@ -34,5 +34,7 @@ def test_expanded_box_system():
     atomic_system.add_expanded_box_atoms(query_pnt, neigh_atoms)
 
     # The original atoms object should have 4 H atoms, and the expanded system should have 6
-    assert len(atomic_system.atoms) == 4
-    assert len(atomic_system.expanded_atoms) == 6 
+    atoms_ref_tags = np.array([1, 2, 3, 4]) # These should be the tags
+    expanded_atoms_ref_tags = np.array([1, 2, 3, 4, 5, 6]) # Two new atoms should have tags added
+    np.testing.assert_array_equal(atomic_system.atoms.get_tags(), atoms_ref_tags)
+    np.testing.assert_array_equal(atomic_system.expanded_atoms.get_tags(), expanded_atoms_ref_tags)

@@ -50,7 +50,8 @@ fe_pos_query_pnt = currentframe.get_positions()[fe_ind[0]]
 box_len = currentframe.get_cell_lengths_and_angles()[:3]
 # 7 Nearest neighbours
 k=nearest_neigh+1 # including the central atom 
-dist, all_pos = solvis.util.k_nearest_neighbours(pos, fe_pos_query_pnt, k, box_len)
+dist, neigh_ind = solvis.util.k_nearest_neighbours(pos, fe_pos_query_pnt, k, box_len)
+all_pos = pos[neigh_ind]
 
 # Nearest positions excluding the central atom 
 solvent_pos = all_pos[1:]

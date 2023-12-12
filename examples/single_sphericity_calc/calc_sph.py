@@ -45,7 +45,8 @@ box_len = currentframe.cell.cellpar()[:3]
 
 # Nearest neighbours
 k = 7
-dist, solvent_pos = solvis.util.k_nearest_neighbours(o_atoms_pos, fe_pos_query_pnt, k, box_len)
+dist, neigh_ind = solvis.util.k_nearest_neighbours(o_atoms_pos, fe_pos_query_pnt, k, box_len)
+solvent_pos = o_atoms_pos[neigh_ind]
 k_near_pos = solvent_pos[:6] # closest six solvent molecules only!
 
 # Shift the points with respect to the central Fe atom

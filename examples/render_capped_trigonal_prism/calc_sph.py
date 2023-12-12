@@ -39,7 +39,8 @@ fake_center = np.mean(pos, axis=0)
 box_len = currentframe.get_cell_lengths_and_angles()[:3]
 # 7 Nearest neighbours
 k=7
-dist, k_near_pos = solvis.util.k_nearest_neighbours(pos, fake_center, k, box_len)
+dist, neigh_ind = solvis.util.k_nearest_neighbours(pos, fake_center, k, box_len)
+k_near_pos = pos[neigh_ind]
 
 # Get the convex hull using the scipy wrapper for QHull
 hull = ConvexHull(k_near_pos)

@@ -94,7 +94,8 @@ for iframe,currentframe in enumerate(traj):
         fe_pos_query_pnt = currentframe.get_positions()[fe_ind[j_ion]]
 
         # Extract the k (6) nearest neighbour positons 
-        dist, k_near_pos = solvis.util.k_nearest_neighbours(o_atoms_pos, fe_pos_query_pnt, k, box_len)
+        dist, neigh_ind = solvis.util.k_nearest_neighbours(o_atoms_pos, fe_pos_query_pnt, k, box_len)
+        k_near_pos = o_atoms_pos[neigh_ind]
 
         # Find the coordination number within a cutoff 
         cn_val = solvis.util.nearest_neighbours_within_cutoff(o_atoms_pos, fe_pos_query_pnt, cutoff, box_len)

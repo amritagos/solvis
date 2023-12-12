@@ -64,7 +64,7 @@ def k_nearest_neighbours(data, query_pnt, k, box_dimensions=None):
     - box_dimensions: List or array of box dimensions [lx, ly, lz].
 
     Returns:
-    - (dist, k_nearest_pos): Distances and positions of the k-nearest neighbours.
+    - (dist, neigh_ind): Distances and indices of the k-nearest neighbours.
 
     """
     # Create the KDTree using data
@@ -77,7 +77,7 @@ def k_nearest_neighbours(data, query_pnt, k, box_dimensions=None):
     # neigh_ind refers to the indices in data corresponding to the neighbours 
     dist, neigh_ind = kdtree.query(query_pnt,k)
 
-    return (dist,data[neigh_ind])
+    return (dist,neigh_ind)
 
 def nearest_neighbours_within_cutoff(data, query_pnt, cutoff, box_dimensions=None):
     """

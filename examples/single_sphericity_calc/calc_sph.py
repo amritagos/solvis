@@ -30,6 +30,14 @@ ref_value = 0.805005
 # Delete the H atoms (In this example there are no H atoms, but still) 
 del currentframe[[atom.index for atom in currentframe if atom.number==h_type]]
 
+# Shift all the positions by the minimum coordinate in x, y, z
+# You need to do this or else SciPy will error out when 
+# applying periodic boundary conditions if coordinates are outside the box (0,0,0)(xboxlength, yboxlength,zboxlength)
+xlo = np.min(currentframe.get_positions()[:,0])
+ylo = np.min(currentframe.get_positions()[:,1])
+zlo = np.min(currentframe.get_positions()[:,2])
+currentframe.translate([-xlo,-ylo,-zlo])
+
 # Get just the O atoms 
 o_atoms = currentframe[[atom.index for atom in currentframe if atom.number==o_type]]
 o_atoms_pos = o_atoms.get_positions()

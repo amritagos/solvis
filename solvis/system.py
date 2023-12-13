@@ -2,6 +2,7 @@ from ase import Atoms
 from .atom_tag_manager import AtomTagManager
 from scipy.spatial import KDTree
 import numpy as np 
+import math
 
 from .util import minimum_image_shift
 
@@ -91,7 +92,19 @@ class System:
         else:
             return neigh_atoms
 
-    def create_solvation_shell(self, central_pnt, solvent_atom_types='all', num_neighbours=6):
+    def create_solvation_shell_from_center(self, central_pnt, num_neighbours, contains_solvation_center=False,
+        solvent_atom_types='all'):
+        """
+        Creates a SolvationShell as a subsystem from System, given a central point.
+
+        central_pnt: (int or numpy.ndarray) If int, this is the index of the Atom in atoms. If
+        np.ndarray, it is the coordinates of the central point
+        num_neighbours: Number of neighbours to return in the solvation shell
+        contains_solvation_center: (Optional, False) If this is set to True, then it is assumed that
+        the center is part of solvent_atoms. An additional check is performed to remove the first neighbour
+        if the distance is within 1e-4 of 0.0. 
+        solvent_atom_types: ('all' or list of solvent atom types) Neighbours will be searched in this subset of atoms  
+        """
         from .solvation_shell import SolvationShell
         if type(central_pnt) is int:
             central_pnt_pos = self.atoms.get_positions()[central_pnt]
@@ -108,8 +121,17 @@ class System:
             solvent_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in solvent_atom_types]]
 
         # Find the k-nearest neighbours from the central point
-        dist, neigh_ind = solvis.util.k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours, self.box_lengths)
-        # Get an Atoms object with the neighbours
-        neigh_atoms = self.add_expanded_box_atoms(central_pnt, solvent_atoms[neigh_ind])
+        if contains_solvation_center:
+            dist, neigh_ind = solvis.util.k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours+1, self.box_lengths)
+            if math.isclose(dist[0], 0.0, rel_tol=1e-4):
+                dist = dist[1:]
+                neigh_ind = neigh_ind[1:]
+            else:
+                dist = dist[:num_neighbours]
+                neigh_ind = neigh_ind[:num_neighbours]
+        else:
+            dist, neigh_ind = solvis.util.k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours, self.box_lengths)
+        # Get an Atoms object with the neighbours such that the positions are unwrapped 
+        neigh_atoms = self.add_expanded_box_atoms(central_pnt_pos, solvent_atoms[neigh_ind])
         
-        return SolvationShell(neigh_atoms, expand_box=False)
+        return SolvationShell(neigh_atoms, center=central_pnt_pos)

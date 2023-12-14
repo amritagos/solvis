@@ -4,7 +4,7 @@ from scipy.spatial import KDTree
 import numpy as np 
 import math
 
-from .util import minimum_image_shift
+from .util import minimum_image_shift, k_nearest_neighbours
 
 class System:
     def __init__(self, atoms: Atoms, expand_box=True):
@@ -42,15 +42,23 @@ class System:
     def _shift_all_positions_into_box(self):
         """
         Shift all the positions by the minimum coordinate in x, y, z
+        but only if the coordinates lie outside the box (0,0,0)(xboxlength, yboxlength,zboxlength).
         You need to do this or else SciPy will error out when 
         applying periodic boundary conditions if coordinates are 
         outside the box (0,0,0)(xboxlength, yboxlength,zboxlength).
         We use SciPy to find the nearest neighbours 
         """
-        xlo = np.min(self.atoms.get_positions()[:,0])
-        ylo = np.min(self.atoms.get_positions()[:,1])
-        zlo = np.min(self.atoms.get_positions()[:,2])
-        self.atoms.translate([-xlo,-ylo,-zlo])
+        # Do nothing if pbcs have not been set
+        if False in self.atoms.pbc:
+            return
+
+        x_min, y_min, z_min = np.min(self.atoms.get_positions(), axis=0)
+        x_max, y_max, z_max = np.max(self.atoms.get_positions(), axis=0)
+        
+        # Check if the minimum coordinates are less than 0 or 
+        # if the maximum coordinates are greater than 0 
+        if x_min < 0 or y_min < 0 or z_min < 0 or x_max > self.box_lengths[0] or y_max > self.box_lengths[1] or z_max > self.box_lengths[2]:
+            self.atoms.translate([-xmin,-ymin,-zmin])
 
     def add_expanded_box_atoms(self, query_pnt, neigh_atoms:Atoms):
         """
@@ -122,7 +130,7 @@ class System:
 
         # Find the k-nearest neighbours from the central point
         if contains_solvation_center:
-            dist, neigh_ind = solvis.util.k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours+1, self.box_lengths)
+            dist, neigh_ind = k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours+1, self.box_lengths)
             if math.isclose(dist[0], 0.0, rel_tol=1e-4):
                 dist = dist[1:]
                 neigh_ind = neigh_ind[1:]
@@ -130,7 +138,7 @@ class System:
                 dist = dist[:num_neighbours]
                 neigh_ind = neigh_ind[:num_neighbours]
         else:
-            dist, neigh_ind = solvis.util.k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours, self.box_lengths)
+            dist, neigh_ind = k_nearest_neighbours(solvent_atoms.get_positions(), central_pnt_pos, num_neighbours, self.box_lengths)
         # Get an Atoms object with the neighbours such that the positions are unwrapped 
         neigh_atoms = self.add_expanded_box_atoms(central_pnt_pos, solvent_atoms[neigh_ind])
         

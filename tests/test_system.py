@@ -44,3 +44,29 @@ def test_expanded_box(atomic_system):
     expanded_atoms_ref_tags = np.array([1, 2, 3, 4, 5, 6]) # Two new atoms should have tags added
     np.testing.assert_array_equal(atomic_system.atoms.get_tags(), atoms_ref_tags)
     np.testing.assert_array_equal(atomic_system.expanded_atoms.get_tags(), expanded_atoms_ref_tags)
+
+def test_create_solvation_shell_from_system_4_atoms_center(atomic_system):
+    ''' Test that you can create a solvation cell from a System of 4 atoms, 
+    where the first atom is the 'center', and coordinates are unwrapped according to 
+    the first atom 
+    '''
+
+    # The Atom with coordinates we want to exclude is the first one, with index 0
+    index_center = 0
+
+    # Create the solvation shell from the System, such that the first atom is the center
+    # and is excluded. There will be three neighbours 
+    solvation_shell = atomic_system.create_solvation_shell_from_center(index_center, num_neighbours=3, contains_solvation_center=True,
+        solvent_atom_types='all') 
+
+    # Check the tags of the solvation shell
+    shell_tags = np.array([2, 5, 6])
+    np.testing.assert_array_equal(solvation_shell.atoms.get_tags(), shell_tags)
+    # Since we created this solvation shell from a System with the first atom in System,
+    # the center should be the first atom's positions
+    np.testing.assert_array_equal(solvation_shell.center, atomic_system.atoms.get_positions()[index_center])
+
+    # Check that the tag manager works: each tag should correspond to the index in the atoms object
+    # of the SolvationShell
+    for index,tag in enumerate(solvation_shell.atoms.get_tags()):
+        assert solvation_shell.tag_manager.lookup_index_by_tag(tag) == index 

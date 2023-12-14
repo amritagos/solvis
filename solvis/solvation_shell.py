@@ -8,7 +8,11 @@ class SolvationShell(System):
     can be assigned. The solvation shell should have unwrapped coordinates.  
     """
     def __init__(self, solvent_atoms: Atoms, center=None):
-        super().__init__(solvent_atoms)
+        super().__init__(solvent_atoms, expand_box=False)
+        # We created the following: self.atoms, self.bonds=[], 
+        # self.box_lengths from solvent_atoms
+        # self.tag_manager and self.is_expanded_box
+        
         # If the center is not set, then assign a fake center 
         if center is None:
             # Calculate a fake center, assuming unwrapped coordinates 

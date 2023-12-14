@@ -58,7 +58,7 @@ class System:
         # Check if the minimum coordinates are less than 0 or 
         # if the maximum coordinates are greater than 0 
         if x_min < 0 or y_min < 0 or z_min < 0 or x_max > self.box_lengths[0] or y_max > self.box_lengths[1] or z_max > self.box_lengths[2]:
-            self.atoms.translate([-xmin,-ymin,-zmin])
+            self.atoms.translate([-x_min,-y_min,-z_min])
 
     def add_expanded_box_atoms(self, query_pnt, neigh_atoms:Atoms):
         """

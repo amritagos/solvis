@@ -1,5 +1,10 @@
 from ase import Atoms
 from .system import System 
+import numpy as np 
+import math
+
+from .util import minimum_image_shift
+from .atom_tag_manager import AtomTagManager
 
 class SolvationShell(System):
     """
@@ -12,7 +17,7 @@ class SolvationShell(System):
         # We created the following: self.atoms, self.bonds=[], 
         # self.box_lengths from solvent_atoms
         # self.tag_manager and self.is_expanded_box
-        
+
         # If the center is not set, then assign a fake center 
         if center is None:
             # Calculate a fake center, assuming unwrapped coordinates 
@@ -27,10 +32,12 @@ class SolvationShell(System):
         """
         return np.mean(self.atoms.get_positions(), axis=0)
 
-    def build_convex_hull(self, num_neighbours=6):
+    def build_convex_hull(self, num_neighbours):
         """
         Takes the type of the central atom (in LAMMPS there are integral numbers) and the solvent atom type  
         """
+        # TODO: rearrange in order of lowest distance to highest distance to center
+        # rearrange the tags 
         pass 
 
     def calculate_properties(self):
@@ -65,4 +72,4 @@ def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, cente
             atom.position = unwrapped_position
 
     # Create the SolvationShell
-    return SolvationShell(neigh_atoms, center=center)
+    return SolvationShell(solvent_atoms, center=center)

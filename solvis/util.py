@@ -4,6 +4,13 @@ from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageChops
 from scipy.spatial import KDTree
 
+def minimum_image_distance(pointa, pointb, box_dimensions):
+    delta = pointa - pointb
+    for i in range(len(delta)):
+        delta[i] -= box_dimensions[i] * round(delta[i] / box_dimensions[i])
+
+    return np.linalg.norm(delta)
+
 def minimum_image_shift(point, reference, box_dimensions):
     """
     Shift the coordinates of a point to have the minimum image distance
@@ -91,7 +98,7 @@ def nearest_neighbours_within_cutoff(data, query_pnt, cutoff, box_dimensions=Non
     - box_dimensions: List or array of box dimensions [lx, ly, lz].
 
     Returns:
-    - coord_num: Number of neighbours within the cutoff 
+    - neigh_ind: list of indices 
 
     """
     # Create the KDTree using data
@@ -101,9 +108,9 @@ def nearest_neighbours_within_cutoff(data, query_pnt, cutoff, box_dimensions=Non
         kdtree = KDTree(data) # no periodic boundary conditions 
 
     # Find the coordination number within a cutoff 
-    coord_num = kdtree.query_ball_point(query_pnt,r=cutoff,return_length=True)
+    neigh_ind = kdtree.query_ball_point(query_pnt,r=cutoff,return_length=False)
 
-    return coord_num
+    return neigh_ind
 
 def distance_projected(pointa, pointb, pointc, pointd):
     # Calculate the direction vector of the line defined by C and D

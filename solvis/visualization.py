@@ -119,7 +119,7 @@ class AtomicPlotter:
         name=actor_name,
         **mesh_options)
 
-    def add_atoms_as_spheres(self,pointset, colors, radius=0.1, **mesh_options_override_default):
+    def add_atoms_as_spheres(self,pointset, colors, radius=0.1, name=None,**mesh_options_override_default):
         """ 
         Plot points (i.e. atoms) as spheres 
 
@@ -139,7 +139,10 @@ class AtomicPlotter:
         # Go over all the points inside pointset
         for i, (point, color) in enumerate(zip(pointset, colors)):
             sphere = pv.Sphere(radius=radius, center=point)
-            actor_name = "p_"+str(i)
+            if name is None:
+                actor_name = "p_"+str(i)
+            else:
+                actor_name = "p_"+ name + str(i)
             # Add the actor
             self.plotter.add_mesh(sphere,
                 color=color, 
@@ -181,7 +184,7 @@ class AtomicPlotter:
             )
 
     def create_bonds_from_edges(self, pointset, edges, point_colors=None, single_bond_colors=None, 
-        radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, **mesh_options_override_default):
+        radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, name=None,**mesh_options_override_default):
         """ 
         Create bonds from a list of bonds, using 
 
@@ -206,7 +209,10 @@ class AtomicPlotter:
             b_index = bond[1]
             pointa = pointset[a_index]
             pointb = pointset[b_index]
-            actor_name = "tube"+str(idx)
+            if name is None:
+                actor_name = "tube"+str(idx)
+            else:
+                actor_name = "tube_" + name + str(idx)
             if set_single_color:
                 colora = single_bond_colors[idx]
                 colorb = colora
@@ -218,7 +224,7 @@ class AtomicPlotter:
                 bond_gradient_start, asymmetric_gradient_start, **mesh_options_override_default)
 
     def create_bonds_to_point(self, pointset, central_point, point_colors=None, central_point_color=None,single_bond_colors=None, 
-        radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, **mesh_options_override_default):
+        radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, name=None,**mesh_options_override_default):
         """ 
         Create bonds from of each point in a list of points, to a particular point 
 
@@ -242,7 +248,10 @@ class AtomicPlotter:
                 central_point_color="black"
 
         for idx, point in enumerate(pointset):
-            actor_name = "tube"+str(idx)
+            if name is None:
+                actor_name = "tube"+str(idx)
+            else:
+                actor_name = "tube_" + name + str(idx)
             if set_single_color:
                 colora = single_bond_colors[idx]
                 colorb = colora

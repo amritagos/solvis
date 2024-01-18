@@ -88,7 +88,7 @@ def k_nearest_neighbours(data, query_pnt, k, box_dimensions=None):
 
 def nearest_neighbours_within_cutoff(data, query_pnt, cutoff, box_dimensions=None):
     """
-    Return number of nearest neighbours within a cutoff, from a given query point 
+    Return the indices of the nearest neighbours within a cutoff, from a given query point 
     given a query point. 
     
     Parameters:

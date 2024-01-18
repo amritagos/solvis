@@ -14,7 +14,7 @@ script_dir = Path(__file__).resolve().parent
 infilename = script_dir / '../../resources/solution_box.lammpstrj'
 out_dir = script_dir / "output"
 outfilename = "sph_data.txt" # save to output directory
-cutoff = 2.50
+cutoff = 2.60
 # In the LAMMPS trajectory file, the types of atoms are 1, 2, 3 and 4 for O, H, Fe and Cl respectively.
 fe_type = 3
 h_type = 2
@@ -57,6 +57,7 @@ else:
 # and CN for each ion 
 for i in range(num_feions):
     df[f'sph{i}'] = None 
+    df[f'r6{i}'] = None
     df[f'cn{i}'] = None 
 
 # Loop through all the frames 
@@ -98,7 +99,7 @@ for iframe,currentframe in enumerate(traj):
         k_near_pos = o_atoms_pos[neigh_ind]
 
         # Find the coordination number within a cutoff 
-        cn_val = solvis.util.nearest_neighbours_within_cutoff(o_atoms_pos, fe_pos_query_pnt, cutoff, box_len)
+        cn_val = len(solvis.util.nearest_neighbours_within_cutoff(o_atoms_pos, fe_pos_query_pnt, cutoff, box_len))
 
         # Shift the points with respect to the central Fe atom
         # SciPy doesn't have support for periodic boundary conditions
@@ -115,8 +116,12 @@ for iframe,currentframe in enumerate(traj):
         # Calculate the sphericity 
         sph_val = solvis.util.sphericity(vol,area)
 
+        # Average distance of the first six neighbours 
+        r6_val = np.mean(dist[:6])
+
         # Update the pandas dataframe
         df.loc[iframe,f'sph{j_ion}'] = sph_val
+        df.loc[iframe,f'r6{j_ion}'] = r6_val # distance of 6 closest neighbours 
         df.loc[iframe,f'cn{j_ion}'] = cn_val
 
 df.to_csv(output_file, index=False, header=True, mode='w', line_terminator='\n', sep=' ')

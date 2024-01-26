@@ -4,6 +4,7 @@ from ase.data import chemical_symbols
 from ase.io import lammpsdata, read 
 import numpy as np
 from scipy.spatial import ConvexHull
+from scipy.stats import sem
 from pathlib import Path 
 from pyvista import PolyData
 
@@ -125,3 +126,18 @@ for iframe,currentframe in enumerate(traj):
         df.loc[iframe,f'cn{j_ion}'] = cn_val
 
 df.to_csv(output_file, index=False, header=True, mode='w', line_terminator='\n', sep=' ')
+
+# Filter non-octahedral and octahedral data
+# Octahedral if sph >= 0.836694
+# Non-octahedral if sph < 0.836694
+df_oct = df[df['sph0'] >= 0.836694]
+df_non_oct = df[df['sph0'] < 0.836694]
+
+# Mean and standard error of the mean for the r6 value 
+# mean_r6_oct = df_oct['r60'].mean() # r6 average for octahedral 
+# stdev_r6_oct = sem(df_oct['r60']) # standard error of the mean for octahedral 
+mean_r6_non_oct = df_non_oct['r60'].mean() # r6 average for non-octahedral
+stdev_r6_non_oct = sem(df_non_oct['r60']) # standard error of the mean for non-octahedral 
+
+# print(f"Mean of first six neighbour distance for octahedral state: {mean_r6_oct}, Standard Deviation: {stdev_r6_oct}\n")
+print(f"Mean of first six neighbour distance for non-octahedral state: {mean_r6_non_oct}, Standard Deviation: {stdev_r6_non_oct}\n")

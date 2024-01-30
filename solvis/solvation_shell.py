@@ -56,6 +56,22 @@ def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, cente
     center: Coordinates of the center; if not provided then the first coordinate
     in solvent_atoms is chosen as the anchor point in creating unwrapped coordinates 
     """
+
+    # Shift all the positions by the minimum coordinate in x, y, z
+    # but only if the coordinates lie outside the box (0,0,0)(xboxlength, yboxlength,zboxlength).
+    # You need to do this or else SciPy will error out when 
+    # applying periodic boundary conditions if coordinates are 
+    # outside the box (0,0,0)(xboxlength, yboxlength,zboxlength).
+    # We use SciPy to find the nearest neighbours 
+    x_min, y_min, z_min = np.min(solvent_atoms.get_positions(), axis=0)
+    x_max, y_max, z_max = np.max(solvent_atoms.get_positions(), axis=0)
+        
+    # Check if the minimum coordinates are less than 0 or 
+    # if the maximum coordinates are greater than 0 
+    if x_min < 0 or y_min < 0 or z_min < 0 or x_max > box_lengths[0] or y_max > box_lengths[1] or z_max > box_lengths[2]:
+        solvent_atoms.translate([-x_min,-y_min,-z_min])
+
+    # Unwrap the clusters about a point
     if center is None:
         # If no center is provided,
         anchor_point = solvent_atoms.get_positions()[0] 

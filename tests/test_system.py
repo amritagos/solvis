@@ -28,6 +28,7 @@ def test_wrapped_in_box(atomic_system):
     and starting from 0.0. This is required for SciPy's nearest neighbours with pbcs to work. 
     '''
 
+    # Testing the function for shifting coordinates within the System class
     # The positions of atoms in atomic_system do not start from 0.0. Let's shift them by 0.1
     atomic_system.atoms.translate([-0.1,0.0,0.0])
     old_pos = atomic_system.atoms.get_positions()
@@ -38,6 +39,14 @@ def test_wrapped_in_box(atomic_system):
     atomic_system.atoms.set_positions(shifted_pos)
     atomic_system._shift_all_positions_into_box()
     np.testing.assert_allclose(atomic_system.atoms.get_positions(), old_pos)
+
+    # Testing the function for shifting coordinates using the function from util
+    atoms = atomic_system.atoms
+    old_pos = atoms.get_positions()
+    shifted_pos = old_pos + 10.0
+    box_lengths = atoms.cell.cellpar()[:3]
+    atoms = solvis.util.sanitize_positions_into_periodic_box(atoms, box_lengths)
+    np.testing.assert_allclose(atoms.get_positions(), old_pos)
 
 def test_expanded_box(atomic_system):
     ''' Test that when a query point is chosen, atoms which are 'neighbours'

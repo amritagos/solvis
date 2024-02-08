@@ -15,13 +15,29 @@ def atomic_system():
 
     # Create an Atoms object with 4 atoms in a box
     atoms = Atoms('H4', positions=[
-        (9.8, 0, 0),
-        (9.6, 0, 0),
-        (0.1, 0, 0),
-        (0.5, 0, 0),
+        (9.8, 0.0, 0.0),
+        (9.6, 0.0, 0.0),
+        (0.1, 0.0, 0.0),
+        (0.5, 0.0, 0.0),
     ], pbc=True, cell=[box_length, box_length, box_length])
     # Create a System using the ASE Atoms object we created
     return solvis.system.System(atoms, expand_box=True)
+
+def test_wrapped_in_box(atomic_system):
+    ''' Make sure that the coordinates are shifted into a periodic box defined by box lengths,
+    and starting from 0.0. This is required for SciPy's nearest neighbours with pbcs to work. 
+    '''
+
+    # The positions of atoms in atomic_system do not start from 0.0. Let's shift them by 0.1
+    atomic_system.atoms.translate([-0.1,0.0,0.0])
+    old_pos = atomic_system.atoms.get_positions()
+    
+    # Now shift these positions so that they are outside the periodic box starting from 0.0,0.0,0.0
+    shifted_pos = 10.0 + old_pos 
+    # Testing the function _shift_all_positions_into_box inside the System class
+    atomic_system.atoms.set_positions(shifted_pos)
+    atomic_system._shift_all_positions_into_box()
+    np.testing.assert_allclose(atomic_system.atoms.get_positions(), old_pos)
 
 def test_expanded_box(atomic_system):
     ''' Test that when a query point is chosen, atoms which are 'neighbours'

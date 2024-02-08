@@ -50,6 +50,7 @@ class System:
         """
         # Do nothing if pbcs have not been set
         if False in self.atoms.pbc:
+            print("Warning: PBCs are set to false.\n")
             return
 
         x_min, y_min, z_min = np.min(self.atoms.get_positions(), axis=0)
@@ -59,6 +60,13 @@ class System:
         # if the maximum coordinates are greater than 0 
         if x_min < 0 or y_min < 0 or z_min < 0 or x_max > self.box_lengths[0] or y_max > self.box_lengths[1] or z_max > self.box_lengths[2]:
             self.atoms.translate([-x_min,-y_min,-z_min])
+
+        # Clip the coordinates into the periodic box
+        pos = np.array(self.atoms.get_positions())
+        for j in range(3):
+            pos[:,j] = np.clip(pos[:,j], 0.0, self.box_lengths[j]*(1.0-1E-16))
+
+        self.atoms.set_positions(pos)
 
     def add_expanded_box_atoms(self, query_pnt, neigh_atoms:Atoms):
         """

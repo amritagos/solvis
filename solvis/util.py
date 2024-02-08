@@ -4,6 +4,35 @@ from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageChops
 from scipy.spatial import KDTree
 
+def sanitize_positions_into_periodic_box(atoms, box_lengths):
+    """
+    Make sure all atom coordinates fit into the periodic boundary box,
+    given an ASE atoms object and the box lengths.
+    If pbcs are not set then return the atoms object itself. 
+    If set_tol is set to True, then atoms are shifted with a tolerance of 1E-16
+    It is recommended to keep the value of set_tol to False, unless SciPy fails. 
+    """
+
+    if False in atoms.pbc:
+        print("Warning: PBCs are set to false.\n")
+        return
+
+    x_min, y_min, z_min = np.min(atoms.get_positions(), axis=0)
+    x_max, y_max, z_max = np.max(atoms.get_positions(), axis=0)
+        
+    # Check if the minimum coordinates are less than 0 or 
+    # if the maximum coordinates are greater than 0 
+    if x_min < 0 or y_min < 0 or z_min < 0 or x_max > box_lengths[0] or y_max > box_lengths[1] or z_max > box_lengths[2]:
+        atoms.translate([-x_min,-y_min,-z_min])
+
+    # Clip the coordinates into the periodic box
+    pos = np.array(atoms.get_positions())
+    for j in range(3):
+        pos[:,j] = np.clip(pos[:,j], 0.0, box_lengths[j]*(1.0-1E-16))
+    atoms.set_positions(pos)
+
+    return atoms
+
 def minimum_image_distance(pointa, pointb, box_dimensions):
     delta = pointa - pointb
     for i in range(len(delta)):

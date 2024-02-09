@@ -21,8 +21,8 @@ def solvation_shell_from_frame():
     h_type = 2
     o_type = 1
  
-    script_dir = Path(__file__).resolve().parent
-    infilename = script_dir / '../resources/single_capped_trigonal_prism.lammpstrj'
+    test_dir = Path(__file__).resolve().parent
+    infilename = test_dir / '../resources/single_capped_trigonal_prism.lammpstrj'
     # Read in the current frame 
     currentframe = read(infilename, format="lammps-dump-text") # Read in the last frame of the trajectory
     

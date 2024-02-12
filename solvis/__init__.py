@@ -9,3 +9,4 @@ from .solvation_shell import *
 from .util import * 
 from .visualization import *
 from .atom_tag_manager import *
+from .geometric_utils import * 

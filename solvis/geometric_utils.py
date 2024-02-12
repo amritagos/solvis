@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.spatial import ConvexHull
+import scipy 
 from pyvista import PolyData
 
 class ConvexHull:
@@ -12,35 +12,34 @@ class ConvexHull:
 		# The input coordinates
 		self.points = points 
 		# The actual convex hull (wrapper arouund SciPy)
-		self.hull = ConvexHull(self.points)
+		hull = scipy.spatial.ConvexHull(points)
 
 		# The faces of the convex hull. Indices correspond to 
 		# indices of the input points
-		self.faces = self.hull.simplices
+		self.faces = hull.simplices
 
 		# Get the surface area and the enclosed volume from the convex hull
-		self.area = self.hull.area
-		self.volume = self.hull.volume
+		self.area = hull.area
+		self.volume = hull.volume
 
 		def pyvista_hull_from_convex_hull(self):
-        """
-        Return a PyVista PolyData object, converting from SciPy's convex hull 
-        """
-        faces_pyvistaformat = np.column_stack((3*np.ones((len(self.faces), 1), dtype=int), self.faces)).flatten()
-		polyhull = PolyData(self.points, faces_pyvistaformat)
-        return polyhull
+			"""
+			Return a PyVista PolyData object, converting from SciPy's convex hull  
+			"""
+			faces_pyvistaformat = np.column_stack((3*np.ones((len(self.faces), 1), dtype=int), self.faces)).flatten()
+			polyhull = PolyData(self.points, faces_pyvistaformat)
+			return polyhull
 
 		def get_edges(self):
-        """
-        Get a numPy array of edges from the faces, of shape (n_edges,2). 
-        """
+			"""
+			Get a numPy array of edges from the faces, of shape (n_edges,2).  
+			"""
+			edges = set()
 
-        edges = set()
+			for simplex in self.faces:
+				edges.add(tuple(sorted([simplex[0], simplex[1]])))
+				edges.add(tuple(sorted([simplex[1], simplex[2]])))
+				edges.add(tuple(sorted([simplex[2], simplex[0]])))
 
-		for simplex in self.faces:
-    		edges.add(tuple(sorted([simplex[0], simplex[1]])))
-    		edges.add(tuple(sorted([simplex[1], simplex[2]])))
-    		edges.add(tuple(sorted([simplex[2], simplex[0]])))
-
-		edges = np.array(list(edges))
-        return edges
+			edges = np.array(list(edges))
+			return edges

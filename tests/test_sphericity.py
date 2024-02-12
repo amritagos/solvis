@@ -3,9 +3,7 @@ import numpy as np
 from ase.io import read 
 from ase.atoms import Atom, Atoms  
 from ase.data import chemical_symbols
-from scipy.spatial import ConvexHull
 from pathlib import Path 
-from pyvista import PolyData
 
 import solvis
 
@@ -57,10 +55,10 @@ def test_sphericity_calculation(solvation_shell_from_frame):
     for a capped trigonal prismatic configuration. 
     '''
     # Get the convex hull using the scipy wrapper for QHull
-    hull = ConvexHull(solvation_shell_from_frame)
+    convex_hull = solvis.geometric_utils.ConvexHull(solvation_shell_from_frame)
  
-    area = hull.area
-    vol = hull.volume 
+    area = convex_hull.area
+    vol = convex_hull.volume 
 
     # Calculate the sphericity from the volume and area 
     sph_value = solvis.util.sphericity(vol,area)

@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
 from ase.io import read 
-from ase.atoms import Atom, Atoms  
+from ase.atoms import Atom, Atoms
+from ase.data import chemical_symbols  
+from pathlib import Path 
 
 import solvis
 
@@ -22,6 +24,21 @@ def atomic_system():
     ], pbc=True, cell=[box_length, box_length, box_length])
     # Create a System using the ASE Atoms object we created
     return solvis.system.System(atoms, expand_box=True)
+
+@pytest.fixture
+def capped_trigonal_prism_system(): 
+    ''' Reads in a LAMMPS trajectory of a single step, and gets the solvation shell
+    corresponding to O (type 1) solvent atoms surrounding a Fe atom (type 3)
+    '''
+ 
+    test_dir = Path(__file__).resolve().parent
+    infilename = test_dir / '../resources/single_capped_trigonal_prism.lammpstrj'
+    # Read in the current frame 
+    atoms = read(infilename, format="lammps-dump-text") # Read in the last frame of the trajectory
+    
+    ctp_system = solvis.system.System(atoms, expand_box=True)
+
+    return ctp_system
 
 def test_create_solvation_shell_from_scratch_4_atoms_no_center(atomic_system):
     ''' Test that you can create a solvation cell from an ASE atoms object of 4 atoms, 
@@ -44,3 +61,33 @@ def test_create_solvation_shell_from_scratch_4_atoms_no_center(atomic_system):
     # of the SolvationShell
     for index,tag in enumerate(solvation_shell.atoms.get_tags()):
         assert solvation_shell.tag_manager.lookup_index_by_tag(tag) == index 
+
+def test_solvation_shell_from_system(capped_trigonal_prism_system):
+    ''' Test that you can create a solvation cell from a System 
+    '''
+    # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
+    fe_type = 3
+    h_type = 2
+    o_type = 1
+
+    # Find the Fe ion (there is only one in this system)
+    # This will be our central atom 
+    fe_ind = capped_trigonal_prism_system.atoms.symbols.search(chemical_symbols[fe_type]) 
+    fe_pos_query_pnt = capped_trigonal_prism_system.atoms.get_positions()[fe_ind[0]]
+
+    solvation_shell = capped_trigonal_prism_system.create_solvation_shell_from_center(central_pnt=fe_pos_query_pnt, num_neighbours=7, contains_solvation_center=True,
+        solvent_atom_types=[1])
+
+    # Check that the tags are the same as those assigned for the 
+    # parent System that the SolvationShell
+    # was created from
+    for tag in solvation_shell.atoms.get_tags():
+        index_solvation_shell  = solvation_shell.tag_manager.lookup_index_by_tag(tag)
+        pos_solvation_shell = solvation_shell.atoms.get_positions()[index_solvation_shell]
+        # Find the corresponding atom (which should have the same tag)
+        # in the System object
+        index_system = capped_trigonal_prism_system.expanded_tag_manager.lookup_index_by_tag(tag)
+        pos_system = capped_trigonal_prism_system.expanded_atoms.get_positions()[index_system]
+
+        # The positions should basically be the same
+        np.testing.assert_array_equal(pos_system, pos_solvation_shell)

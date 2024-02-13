@@ -60,7 +60,6 @@ class SolvationShell(System):
         Calculates the coordination number from the center. The coordinating_type should either
         be the default, 'all', or a list of numbers corresponding to the type or atomic number.  
         """
-        # k should not be greater than the number of solvent atoms, and should be greater than 0
         # Get the Atoms object with all the solvent positions
         if coordinating_type=='all':
             surrounding_atoms = self.atoms
@@ -71,6 +70,32 @@ class SolvationShell(System):
         neigh_ind = nearest_neighbours_within_cutoff(surrounding_atoms.get_positions(), self.center, cutoff, self.box_lengths)
         # Return the coordination number 
         return len(neigh_ind)
+
+    def ravg_of_k_neighbours_from_center(self, num_neighbours,coordinating_type='all'):
+        """
+        Gets the average distance of k neighbours from the center.  
+        """
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        # Get the Atoms object with all the solvent positions
+        if coordinating_type=='all':
+            surrounding_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise 
+            surrounding_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in coordinating_type]]
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        natoms = len(surrounding_atoms)
+        try:
+            k = num_neighbours
+            if num_neighbours>natoms:
+                raise ValueError("k cannot be greater than the number of solvent atoms.\n Setting to maximum value.")
+        except ValueError as error:
+            print(error)
+            k = natoms
+
+        pos = surrounding_atoms.get_positions()[:k]
+        dist = np.linalg.norm(pos-self.center, axis=1)
+        # Return the average of these distances
+        return np.mean(dist)
 
 
 def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, center=None):

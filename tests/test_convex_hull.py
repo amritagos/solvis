@@ -9,7 +9,8 @@ import solvis
 
 @pytest.fixture
 def capped_trigonal_prism_solv_system(): 
-    ''' Reads in a LAMMPS trajectory of a single step, and gets the solvation shell
+    ''' 
+    Reads in a LAMMPS trajectory of a single step, and gets the solvation shell
     corresponding to O (type 1) solvent atoms surrounding a Fe atom (type 3)
     Returns the convex hull of the closest 6 (O) neighbours.
     '''
@@ -40,7 +41,8 @@ def capped_trigonal_prism_solv_system():
     return solvation_shell
 
 def test_convex_hull_creation(capped_trigonal_prism_solv_system):
-    ''' Test that a convex hull is created, and that points, faces and edges
+    ''' 
+    Test that a convex hull is created, and that points, faces and edges
     are created.  
     '''
     solvent_pos = capped_trigonal_prism_solv_system.atoms.get_positions()
@@ -60,7 +62,8 @@ def test_convex_hull_creation(capped_trigonal_prism_solv_system):
 
 
 def test_sphericity_from_hull(capped_trigonal_prism_solv_system):
-    ''' Test the calculation of the sphericity of the 6 nearest neighbours, 
+    ''' 
+    Test the calculation of the sphericity of the 6 nearest neighbours, 
     for a capped trigonal prismatic configuration. 
     '''
     solvent_pos = capped_trigonal_prism_solv_system.atoms.get_positions()

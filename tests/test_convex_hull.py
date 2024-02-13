@@ -8,7 +8,7 @@ from pathlib import Path
 import solvis
 
 @pytest.fixture
-def capped_trigonal_prism_system(): 
+def capped_trigonal_prism_solv_system(): 
     ''' Reads in a LAMMPS trajectory of a single step, and gets the solvation shell
     corresponding to O (type 1) solvent atoms surrounding a Fe atom (type 3)
     '''
@@ -33,11 +33,11 @@ def capped_trigonal_prism_system():
 
     return solvation_shell
 
-def test_sphericity_from_hull(capped_trigonal_prism_system):
+def test_sphericity_from_hull(capped_trigonal_prism_solv_system):
     ''' Test the calculation of the sphericity of the 6 nearest neighbours, 
     for a capped trigonal prismatic configuration. 
     '''
-    solvent_pos = capped_trigonal_prism_system.atoms.get_positions()
+    solvent_pos = capped_trigonal_prism_solv_system.atoms.get_positions()
     k_near_pos = solvent_pos[:6] # closest six solvent molecules only!
     # Get the convex hull using the scipy wrapper for QHull
     convex_hull = solvis.geometric_utils.ConvexHull(k_near_pos)

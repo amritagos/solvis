@@ -3,8 +3,9 @@ from .system import System
 import numpy as np 
 import math
 
-from .util import minimum_image_shift
+from .util import minimum_image_shift, k_nearest_neighbours
 from .atom_tag_manager import AtomTagManager
+from .geometric_utils import ConvexHull 
 
 class SolvationShell(System):
     """
@@ -32,24 +33,34 @@ class SolvationShell(System):
         """
         return np.mean(self.atoms.get_positions(), axis=0)
 
-    def build_convex_hull(self, num_neighbours):
+    def build_convex_hull_k_neighbours(self, num_neighbours):
         """
-        Takes the type of the central atom (in LAMMPS there are integral numbers) and the solvent atom type  
+        Returns a convex hull, created from k nearest neighbours.
+        This function does not check the atom type  
         """
-        # TODO: rearrange in order of lowest distance to highest distance to center
-        # rearrange the tags 
-        pass 
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        natoms = len(self.atoms)
+        try:
+            if num_neighbours>natoms:
+                raise ValueError("k cannot be greater than the number of solvent atoms.\n Setting to maximum value.")
+        except ValueError as error:
+            print(error)
+            k = natoms
 
-    def calculate_properties(self):
-        # Implement methods to calculate iod, cn, r7dist based on the current atoms and bonds
-        # Assign the calculated values to self.iod, self.cn, self.r7dist
-        pass
+        # Find k-nearest neighbours and build the convex hull
+        pos = self.atoms.get_positions()
+        k_nearest_pos = pos[:k]
+        convex_hull = ConvexHull(k_nearest_pos)
+
+        return convex_hull
+
 
 def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, center=None):
     """
     Create a SolvationShell with unwrapped coordinates, 
     which is not formed from a System, but directly from an ASE Atoms
-    object with the desired solvent atoms 
+    object with the desired solvent atoms. These will be arranged in order of distance
+    from the center 
 
     solvent_atoms: ASE object with just the solvent atoms
     box_lengths: Box lengths, needed to get unwrapped coordinates 
@@ -63,21 +74,6 @@ def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, cente
     # applying periodic boundary conditions if coordinates are 
     # outside the box (0,0,0)(xboxlength, yboxlength,zboxlength).
     # We use SciPy to find the nearest neighbours 
-    x_min, y_min, z_min = np.min(solvent_atoms.get_positions(), axis=0)
-    x_max, y_max, z_max = np.max(solvent_atoms.get_positions(), axis=0)
-        
-    # Check if the minimum coordinates are less than 0 or 
-    # if the maximum coordinates are greater than 0 
-    if x_min < 0 or y_min < 0 or z_min < 0 or x_max > box_lengths[0] or y_max > box_lengths[1] or z_max > box_lengths[2]:
-        solvent_atoms.translate([-x_min,-y_min,-z_min])
-
-    # Clip the coordinates into the periodic box
-    # Sometimes atoms seem to migrate slightly out of boxes in LAMMPS
-    # This ensures that SciPy's k-nearest neighbours won't fail.
-    pos = np.array(solvent_atoms.get_positions())
-    for j in range(3):
-        pos[:,j] = np.clip(pos[:,j], 0.0, box_lengths[j]*(1.0-1E-16))
-    solvent_atoms.set_positions(pos)
 
     # Unwrap the clusters about a point
     if center is None:
@@ -94,6 +90,28 @@ def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, cente
         # the unwrapped position
         if np.linalg.norm(unwrapped_position - atom.position) > 1e-5:
             atom.position = unwrapped_position
+
+    x_min, y_min, z_min = np.min(solvent_atoms.get_positions(), axis=0)
+    x_max, y_max, z_max = np.max(solvent_atoms.get_positions(), axis=0)
+    
+    # Check if the minimum coordinates are less than 0 or 
+    # if the maximum coordinates are greater than 0 
+    if x_min < 0 or y_min < 0 or z_min < 0 or x_max > box_lengths[0] or y_max > box_lengths[1] or z_max > box_lengths[2]:
+        solvent_atoms.translate([-x_min,-y_min,-z_min])
+
+    # Clip the coordinates into the periodic box
+    # Sometimes atoms seem to migrate slightly out of boxes in LAMMPS
+    # This ensures that SciPy's k-nearest neighbours won't fail.
+    pos = np.array(solvent_atoms.get_positions())
+    for j in range(3):
+        pos[:,j] = np.clip(pos[:,j], 0.0, box_lengths[j]*(1.0-1E-5))
+    solvent_atoms.set_positions(pos)
+
+    # Arrange in order of distance from the center 
+    pos = solvent_atoms.get_positions()
+    natoms = len(solvent_atoms)
+    dist, neigh_ind = k_nearest_neighbours(pos, anchor_point, natoms, box_lengths)
+    solvent_atoms = solvent_atoms[neigh_ind]
 
     # Create the SolvationShell
     return SolvationShell(solvent_atoms, center=center)

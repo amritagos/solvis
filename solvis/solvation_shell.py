@@ -71,6 +71,14 @@ def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, cente
     if x_min < 0 or y_min < 0 or z_min < 0 or x_max > box_lengths[0] or y_max > box_lengths[1] or z_max > box_lengths[2]:
         solvent_atoms.translate([-x_min,-y_min,-z_min])
 
+    # Clip the coordinates into the periodic box
+    # Sometimes atoms seem to migrate slightly out of boxes in LAMMPS
+    # This ensures that SciPy's k-nearest neighbours won't fail.
+    pos = np.array(solvent_atoms.get_positions())
+    for j in range(3):
+        pos[:,j] = np.clip(pos[:,j], 0.0, box_lengths[j]*(1.0-1E-16))
+    solvent_atoms.set_positions(pos)
+
     # Unwrap the clusters about a point
     if center is None:
         # If no center is provided,

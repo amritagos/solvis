@@ -92,6 +92,11 @@ def test_solvation_shell_from_system(capped_trigonal_prism_system):
         # The positions should basically be the same
         np.testing.assert_array_equal(pos_system, pos_solvation_shell)
 
+    # Check that the coordination number is 7, for a cutoff of 2.60
+    cutoff = 2.60
+    coord_num = solvation_shell.calculate_coordination_number_from_center(cutoff,coordinating_type='all')
+    assert coord_num == 7
+
     # Check that the convex hull of the first 6 neighbours is created
     convex_hull = solvation_shell.build_convex_hull_k_neighbours(num_neighbours=6)
     area = convex_hull.area

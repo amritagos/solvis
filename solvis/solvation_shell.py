@@ -3,7 +3,7 @@ from .system import System
 import numpy as np 
 import math
 
-from .util import minimum_image_shift, k_nearest_neighbours
+from .util import minimum_image_shift, k_nearest_neighbours, nearest_neighbours_within_cutoff
 from .atom_tag_manager import AtomTagManager
 from .geometric_utils import ConvexHull 
 
@@ -54,6 +54,23 @@ class SolvationShell(System):
         convex_hull = ConvexHull(k_nearest_pos)
 
         return convex_hull
+
+    def calculate_coordination_number_from_center(self, cutoff,coordinating_type='all'):
+        """
+        Calculates the coordination number from the center. The coordinating_type should either
+        be the default, 'all', or a list of numbers corresponding to the type or atomic number.  
+        """
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        # Get the Atoms object with all the solvent positions
+        if coordinating_type=='all':
+            surrounding_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise 
+            surrounding_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in coordinating_type]]
+
+        neigh_ind = nearest_neighbours_within_cutoff(surrounding_atoms.get_positions(), self.center, cutoff, self.box_lengths)
+        # Return the coordination number 
+        return len(neigh_ind)
 
 
 def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, center=None):

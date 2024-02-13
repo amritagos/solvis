@@ -91,3 +91,14 @@ def test_solvation_shell_from_system(capped_trigonal_prism_system):
 
         # The positions should basically be the same
         np.testing.assert_array_equal(pos_system, pos_solvation_shell)
+
+    # Check that the convex hull of the first 6 neighbours is created
+    convex_hull = solvation_shell.build_convex_hull_k_neighbours(num_neighbours=6)
+    area = convex_hull.area
+    vol = convex_hull.volume 
+    # Calculate the sphericity from the volume and area 
+    sph_value = solvis.util.sphericity(vol,area)
+    # Check: 
+    # The sphericity should be 0.805005
+    sph_ref_value = 0.805005
+    assert sph_value == pytest.approx(sph_ref_value, 1e-6)

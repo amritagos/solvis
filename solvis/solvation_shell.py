@@ -41,6 +41,7 @@ class SolvationShell(System):
         # k should not be greater than the number of solvent atoms, and should be greater than 0
         natoms = len(self.atoms)
         try:
+            k = num_neighbours
             if num_neighbours>natoms:
                 raise ValueError("k cannot be greater than the number of solvent atoms.\n Setting to maximum value.")
         except ValueError as error:

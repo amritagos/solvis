@@ -22,24 +22,24 @@ class ConvexHull:
 		self.area = hull.area
 		self.volume = hull.volume
 
-		def pyvista_hull_from_convex_hull(self):
-			"""
-			Return a PyVista PolyData object, converting from SciPy's convex hull  
-			"""
-			faces_pyvistaformat = np.column_stack((3*np.ones((len(self.faces), 1), dtype=int), self.faces)).flatten()
-			polyhull = PolyData(self.points, faces_pyvistaformat)
-			return polyhull
+	def pyvista_hull_from_convex_hull(self):
+		"""
+		Return a PyVista PolyData object, converting from SciPy's convex hull  
+		"""
+		faces_pyvistaformat = np.column_stack((3*np.ones((len(self.faces), 1), dtype=int), self.faces)).flatten()
+		polyhull = PolyData(self.points, faces_pyvistaformat)
+		return polyhull
 
-		def get_edges(self):
-			"""
-			Get a numPy array of edges from the faces, of shape (n_edges,2).  
-			"""
-			edges = set()
+	def get_edges(self):
+		"""
+		Get a numPy array of edges from the faces, of shape (n_edges,2).  
+		"""
+		edges = set()
 
-			for simplex in self.faces:
-				edges.add(tuple(sorted([simplex[0], simplex[1]])))
-				edges.add(tuple(sorted([simplex[1], simplex[2]])))
-				edges.add(tuple(sorted([simplex[2], simplex[0]])))
+		for simplex in self.faces:
+			edges.add(tuple(sorted([simplex[0], simplex[1]])))
+			edges.add(tuple(sorted([simplex[1], simplex[2]])))
+			edges.add(tuple(sorted([simplex[2], simplex[0]])))
 
-			edges = np.array(list(edges))
-			return edges
+		edges = np.array(list(edges))
+		return edges

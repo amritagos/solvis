@@ -97,10 +97,15 @@ def test_solvation_shell_from_system(capped_trigonal_prism_system):
     coord_num = solvation_shell.calculate_coordination_number_from_center(cutoff,coordinating_type='all')
     assert coord_num == 7
 
-    # Check the value of r6, average distance of six neighbours from the center 
+    # Check the value of r6_avg, average distance of six neighbours from the center 
     r6avg = solvation_shell.ravg_of_k_neighbours_from_center(num_neighbours=6,coordinating_type='all')
     r6_ref = 2.0824393356331607
     assert r6avg == pytest.approx(r6_ref, 1e-16)
+
+    # Check the value of r7, the distance of the 7th closest neighbour from the center
+    r7 = solvation_shell.r_of_k_th_neighbour_from_center(k=7,coordinating_type='all')
+    r7_ref = 2.1535519160052
+    assert r7 == pytest.approx(r7_ref, 1e-16)
 
     # Check that the convex hull of the first 6 neighbours is created
     convex_hull = solvation_shell.build_convex_hull_k_neighbours(num_neighbours=6)

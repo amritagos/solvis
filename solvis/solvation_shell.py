@@ -97,6 +97,30 @@ class SolvationShell(System):
         # Return the average of these distances
         return np.mean(dist)
 
+    def r_of_k_th_neighbour_from_center(self, k,coordinating_type='all'):
+        """
+        Gets radial distance of k-th neighbour from the center.  
+        """
+        # Get the Atoms object with all the solvent positions
+        if coordinating_type=='all':
+            surrounding_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise 
+            surrounding_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in coordinating_type]]
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        natoms = len(surrounding_atoms)
+        try:
+            if k>natoms or k<1:
+                raise ValueError("k cannot be less than 1 or greater than the number of solvent atoms.\n Setting to maximum value.")
+        except ValueError as error:
+            print(error)
+            k = natoms
+
+        k_pos = surrounding_atoms.get_positions()[k-1]
+        # The distance is already unwrapped with respect to the center
+        r = np.linalg.norm(k_pos-self.center)
+        return r
+
 
 def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, center=None):
     """

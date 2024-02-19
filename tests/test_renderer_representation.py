@@ -57,10 +57,10 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     # Add the atom type and atom type specific rendering options that could go into the 
     # add_single_atom_as_sphere function of the plotter 
     render_rep.add_atom_type_rendering(atom_type=fe_type,color=fe_color, radius=fe_radius)
-    fe_atom_options = render_rep.get_rendering_options(atom_type=fe_type)
+    fe_atom_options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     assert fe_atom_options == {'color': 'black', 'radius': 0.3}
     
     # render_rep.add_atom_type_rendering(atom_type=fe_type)
-    # options = render_rep.get_rendering_options(atom_type=fe_type)
+    # options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     # pl_inter = solvis.visualization.AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)
     # pl_inter.add_single_atom_as_sphere([0,0,0], color=fe_color, radius=0.1, **options)

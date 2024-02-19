@@ -163,7 +163,7 @@ class AtomicPlotter:
 
         # Only override the default options with user-defined options
         mesh_options = merge_options(self.atom_bond_mesh_options, mesh_options_override_default)
-
+        
         # If interactive mode is on, make the bond pickable
         if self.interactive_mode:
             mesh_options.update({"pickable":True})
@@ -222,6 +222,14 @@ class AtomicPlotter:
             # Create the bond
             self.add_bond(pointa, pointb, colora, colorb, actor_name, radius, resolution,
                 bond_gradient_start, asymmetric_gradient_start, **mesh_options_override_default)
+
+    def change_atom_color(self, atom_actor_name, new_color):
+        """ 
+        Change the atom color directly. Not recommended; you should also change the color
+        in the RendererRepresentation object when using this command
+        """
+
+        self.plotter.renderer.actors[atom_actor_name].prop.color = new_color
 
     def create_bonds_to_point(self, pointset, central_point, point_colors=None, central_point_color=None,single_bond_colors=None, 
         radius=0.1, resolution=1,bond_gradient_start=0.0,asymmetric_gradient_start=None, name=None,**mesh_options_override_default):

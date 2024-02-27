@@ -75,3 +75,19 @@ class RendererRepresentation:
         else:
             return False
 
+    def find_color_option_by_atom_tag(self, target_atom_tag):
+        """
+        Function to find the 'color' option in 'render_options' based on the value of 'tag' in a nested dictionary.
+
+        Parameters:
+        - target_atom_tag: The value of 'tag' to search for.
+
+        Returns:
+        - The value associated with the 'color' option if found, otherwise None.
+        """
+        for key, value in self.atoms.items():
+            if isinstance(value, dict):
+                if 'tag' in value and value['tag'] == target_atom_tag:
+                    if 'render_options' in value and 'color' in value['render_options']:
+                        return value['render_options']['color']
+        return None

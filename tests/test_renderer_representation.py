@@ -97,7 +97,12 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.update_atom_render_opt(seventh_mol_name, color="red")
     seventh_mol_options = render_rep.get_render_info_from_atom_name(seventh_mol_name)
     assert seventh_mol_options == {'color': 'red', 'radius': 0.2}
-    
+    # Check that you can access the new color of this atom from the atom tag
+    # This can be used for getting bond colors  
+    seventh_mol_tag = render_rep.atoms.get(seventh_mol_name).get('tag')
+    seventh_mol_color = render_rep.find_color_option_by_atom_tag(seventh_mol_tag)
+    assert seventh_mol_color == 'red'
+
     # render_rep.add_atom_type_rendering(atom_type=fe_type)
     # options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     # pl_inter = solvis.visualization.AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)

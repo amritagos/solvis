@@ -103,6 +103,15 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     seventh_mol_color = render_rep.find_color_option_by_atom_tag(seventh_mol_tag)
     assert seventh_mol_color == 'red'
 
+    # Create a bond between the first and last atoms
+    # Coloured by the atom color, so a_color='midnightblue' and b_color='red'
+    tag1 = capped_trigonal_prism_solv_system.atoms[0].tag
+    tag2 = capped_trigonal_prism_solv_system.atoms[-1].tag
+    assigned_bond_type=1
+    render_rep.add_bond("bond1", [tag1,tag2],assigned_bond_type, colorby="atomcolor",resolution=1)
+    bond_info = {'tags': [3, 10], 'type': 1, 'a_color': 'midnightblue', 'b_color': 'red', 'render_options': {'resolution': 1}}
+    assert render_rep.bonds['bond1'] == bond_info
+
     # render_rep.add_atom_type_rendering(atom_type=fe_type)
     # options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     # pl_inter = solvis.visualization.AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)

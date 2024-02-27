@@ -6,9 +6,11 @@ class RendererRepresentation:
         self.bonds = {}
         self.hydrogen_bonds = {}
         self.atom_type_rendering = {}
+        self.bond_type_rendering = {}
         self.num_atoms = 0
         self.num_bonds = 0
         self.num_hbonds = 0
+        self.default_bond_color = "black"
 
     def add_atom_type_rendering(self, atom_type, **render_options):
         """
@@ -16,9 +18,15 @@ class RendererRepresentation:
         """
         self.atom_type_rendering[atom_type] = render_options
 
+    def add_bond_type_rendering(self, bond_type, color):
+        """
+        Assign a particular color to all bonds of a particular bond type
+        """
+        self.bond_type_rendering[bond_type] = color
+
     def add_atom(self, actor_name, atom_tag, atom_type, **render_options):
         """
-        render_options overrides the render options provided by atom type. TODO: change render_options too 
+        render_options overrides the render options provided by atom type. 
         """
         # Get the render options for the atom type, if they exist
         if atom_type in self.atom_type_rendering:
@@ -30,11 +38,6 @@ class RendererRepresentation:
         self.atoms[actor_name] = atom_info
         # Add to the number of atoms 
         self.num_atoms += 1
-
-    def add_bond(self, actor_name, bond_tags, bond_type):
-        bond_info = {'tags': bond_tags, 'type': bond_type}
-        self.bonds[actor_name] = bond_info
-        self.num_bonds += 1
 
     def add_hydrogen_bond(self, actor_name, atom_tags, bond_type):
         hydrogen_bond_info = {'tags': atom_tags, 'type': bond_type}
@@ -91,3 +94,31 @@ class RendererRepresentation:
                     if 'render_options' in value and 'color' in value['render_options']:
                         return value['render_options']['color']
         return None
+
+    def add_bond(self, actor_name, bond_tags, bond_type, colorby="atomcolor",**render_options):
+        """
+        render_options can override any of the following (default options are:)
+        radius=0.1, resolution=1, bond_gradient_start=0.0, asymmetric_gradient_start=None,**mesh_options_override_default
+        colorby: "atomcolor" or "bondtype". If not any of these options, set to the default color. 
+        TODO: test for bondtype also. Also function for updating colors of an existing bond
+        """
+        # We need a_color and b_color to render the bond 
+        if colorby=="atomcolor":
+            # Get a_color and b_color from the atom colors saved in the atoms dict
+            a_color = self.find_color_option_by_atom_tag(bond_tags[0])
+            b_color = self.find_color_option_by_atom_tag(bond_tags[-1])
+        elif colorby=="bondtype":
+            if bond_type in self.bond_type_rendering.keys():
+                a_color = self.bond_type_rendering[bond_type]
+                b_color = a_color
+            else:
+                print("Warning: Setting bonds to default since colorby was bondtype, but bond_type color was not set\n")
+                a_color = self.default_bond_color
+                b_color = a_color
+        else:
+            a_color = self.default_bond_color
+            b_color = a_color
+        # TODO: error handling here
+        bond_info = {'tags': bond_tags, 'type': bond_type, 'a_color': a_color, 'b_color': b_color,'render_options': render_options}
+        self.bonds[actor_name] = bond_info
+        self.num_bonds += 1

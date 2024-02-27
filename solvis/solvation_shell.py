@@ -11,7 +11,8 @@ class SolvationShell(System):
     """
     In a solvation shell, the atoms will now refer to solvent atoms. 
     center: Should be coordinates of the central point. If None, then a fake center 
-    can be assigned. The solvation shell should have unwrapped coordinates.  
+    can be assigned. The solvation shell should have unwrapped coordinates.
+    Solvent atoms are arranged in ascending order of increasing distance from the center  
     """
     def __init__(self, solvent_atoms: Atoms, center=None):
         super().__init__(solvent_atoms, expand_box=False)

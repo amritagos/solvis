@@ -68,7 +68,7 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
 
 
     # Now add the Fe atom as the center 
-    render_rep.add_atom("fe", None, fe_type) # Handle atom_tag=None for solvation center! TODO
+    render_rep.add_atom("fe", 'center', fe_type) # Handle atom_tag='center' for solvation center! TODO
     assert render_rep.num_atoms == 1 
     # Loop through the solvation atoms and add them
     solvent_string = "oatom" 
@@ -84,7 +84,7 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     # Retreive the indices and coord using atom tags from the solvation shell object
     for i,name in enumerate(render_rep.atoms.keys()):
         tag = render_rep.get_tag_from_atom_name(name)
-        if tag == None:
+        if tag == 'center':
             coord = capped_trigonal_prism_solv_system.center
         else:
             index = capped_trigonal_prism_solv_system.tag_manager.lookup_index_by_tag(tag)

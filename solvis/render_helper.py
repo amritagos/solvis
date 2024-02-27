@@ -33,8 +33,11 @@ class RendererRepresentation:
         hydrogen_bond_info = {'tags': atom_tags, 'type': bond_type}
         self.hydrogen_bonds[actor_name] = hydrogen_bond_info
 
-    def get_atom_info(self, actor_name):
-        return self.atoms.get(actor_name)
+    def get_render_info_from_atom_name(self, actor_name):
+        return self.atoms.get(actor_name).get('render_options')
+
+    def get_tag_from_atom_name(self, actor_name):
+        return self.atoms.get(actor_name).get('tag')
 
     def get_bond_info(self, actor_name):
         return self.bonds.get(actor_name)
@@ -44,4 +47,23 @@ class RendererRepresentation:
 
     def get_atom_rendering_options(self, atom_type):
         return self.atom_type_rendering.get(atom_type, {})
+
+    def update_atom_render_opt(self, actor_name, **render_options):
+        """
+        Function to replace the value of a key in a flat dictionary.
+
+        Parameters:
+        - actor_name: The key in the atoms dict whose value needs to be replaced.
+        - render_options: The new render options.
+
+        Returns:
+        - True if the replacement was successful, False if actor_name was not found.
+        """
+        if actor_name in self.atoms:
+            # Merge with previous options, overwriting
+            options = merge_options(self.atoms.get(actor_name).get('render_options'), render_options)
+            self.atoms[actor_name]['render_options'] = options
+            return True
+        else:
+            return False
 

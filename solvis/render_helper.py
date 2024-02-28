@@ -78,6 +78,25 @@ class RendererRepresentation:
         else:
             return False
 
+    def update_bond_render_opt(self, actor_name, **render_options):
+        """
+        Function to replace the value of a key in a flat dictionary.
+
+        Parameters:
+        - actor_name: The key in the atoms dict whose value needs to be replaced.
+        - render_options: The new render options.
+
+        Returns:
+        - True if the replacement was successful, False if actor_name was not found.
+        """
+        if actor_name in self.bonds:
+            # Merge with previous options, overwriting
+            options = merge_options(self.bonds.get(actor_name).get('render_options'), render_options)
+            self.bonds[actor_name]['render_options'] = options
+            return True
+        else:
+            return False
+
     def find_color_option_by_atom_tag(self, target_atom_tag):
         """
         Function to find the 'color' option in 'render_options' based on the value of 'tag' in a nested dictionary.
@@ -122,3 +141,21 @@ class RendererRepresentation:
         bond_info = {'tags': bond_tags, 'type': bond_type, 'a_color': a_color, 'b_color': b_color,'render_options': render_options}
         self.bonds[actor_name] = bond_info
         self.num_bonds += 1
+
+    def update_bond_colors(self, actor_name, a_color, b_color):
+        """
+        Function to change the bond colors of a given bond actor 
+
+        Parameters:
+        - actor_name: The key in the atoms dict whose value needs to be replaced.
+        - render_options: The new render options.
+
+        Returns:
+        - True if the replacement was successful, False if actor_name was not found.
+        """
+        if actor_name in self.bonds:
+            self.bonds[actor_name]['a_color'] = a_color
+            self.bonds[actor_name]['b_color'] = b_color
+            return True
+        else:
+            return False

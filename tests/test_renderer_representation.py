@@ -108,9 +108,24 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     tag1 = capped_trigonal_prism_solv_system.atoms[0].tag
     tag2 = capped_trigonal_prism_solv_system.atoms[-1].tag
     assigned_bond_type=1
-    render_rep.add_bond("bond1", [tag1,tag2],assigned_bond_type, colorby="atomcolor",resolution=1)
+    render_rep.add_bond('bond1', [tag1,tag2],assigned_bond_type, colorby="atomcolor",resolution=1)
     bond_info = {'tags': [3, 10], 'type': 1, 'a_color': 'midnightblue', 'b_color': 'red', 'render_options': {'resolution': 1}}
     assert render_rep.bonds['bond1'] == bond_info
+    
+    # Add a bond type color 
+    render_rep.add_bond_type_rendering(bond_type=assigned_bond_type, color="dimgrey")
+    assert render_rep.bond_type_rendering[assigned_bond_type] == "dimgrey"
+    
+    # Add a bond between the first and second atoms, coloured according to the bond_type color
+    tag3 = capped_trigonal_prism_solv_system.atoms[1].tag
+    render_rep.add_bond('bond2', [tag1,tag3],assigned_bond_type, colorby="bondtype",resolution=1)
+    bond2_info = {'tags': [3, 4], 'type': 1, 'a_color': 'dimgrey', 'b_color': 'dimgrey', 'render_options': {'resolution': 1}}
+    assert render_rep.bonds['bond2'] == bond2_info
+
+    # Change the color of bond2 to black and red
+    render_rep.update_bond_colors(actor_name='bond2', a_color='black', b_color='red')
+    assert render_rep.bonds['bond2'].get('a_color') == 'black'
+    assert render_rep.bonds['bond2'].get('b_color') == 'red'
 
     # render_rep.add_atom_type_rendering(atom_type=fe_type)
     # options = render_rep.get_atom_rendering_options(atom_type=fe_type)

@@ -122,6 +122,31 @@ class SolvationShell(System):
         r = np.linalg.norm(k_pos-self.center)
         return r
 
+    def distances_of_k_neighbours_from_center(self, num_neighbours,coordinating_type='all'):
+        """
+        Gets a numPy array of distances of k neighbours from the center.  
+        """
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        # Get the Atoms object with all the solvent positions
+        if coordinating_type=='all':
+            surrounding_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise 
+            surrounding_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in coordinating_type]]
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        natoms = len(surrounding_atoms)
+        try:
+            k = num_neighbours
+            if num_neighbours>natoms:
+                raise ValueError("k cannot be greater than the number of solvent atoms.\n Setting to maximum value.")
+        except ValueError as error:
+            print(error)
+            k = natoms
+
+        pos = surrounding_atoms.get_positions()[:k]
+        dist = np.linalg.norm(pos-self.center, axis=1)
+        return dist
+
 
 def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, center=None):
     """
@@ -175,10 +200,11 @@ def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, cente
         pos[:,j] = np.clip(pos[:,j], 0.0, box_lengths[j]*(1.0-1E-16))
     solvent_atoms.set_positions(pos)
 
-    # Arrange in order of distance from the center 
+    # Arrange in order of distance from a fake center 
     pos = solvent_atoms.get_positions()
     natoms = len(solvent_atoms)
-    dist, neigh_ind = k_nearest_neighbours(pos, anchor_point, natoms, box_lengths)
+    fake_center = np.mean(pos, axis=0)
+    dist, neigh_ind = k_nearest_neighbours(pos, fake_center, natoms, box_lengths)
     solvent_atoms = solvent_atoms[neigh_ind]
 
     # Create the SolvationShell

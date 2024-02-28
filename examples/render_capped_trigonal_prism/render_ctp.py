@@ -19,12 +19,6 @@ o_type = 1
 imagename = script_dir / "nonoctahedral.png"
 trimmed_img_name = script_dir / "trimmed.png"
 
-# Bond and atom appearance 
-# Decide what kind of gradient shading you want for bonds 
-bond_gradient_start = 0.3
-bond_radius = 0.1
-atom_radius = 0.1 
-
 # ------------------------------------------------------
 # Glean the coordinates from the LAMMPS trajectory file 
 
@@ -49,6 +43,33 @@ polyhull = convex_hull.pyvista_hull_from_convex_hull()
 # Get a numPy array of edges (n_edges,2)
 edges = convex_hull.get_edges()
 
+# ------------------------------------------------------------
+
+# Bond and atom appearance 
+o_color = "midnightblue"
+seventh_neigh_color = "red"
+# Decide what kind of gradient shading you want for bonds 
+bond_gradient_start = 0.3
+bond_radius = 0.1
+atom_radius = 0.1 
+
+# Build the RendererRepresentation object 
+render_rep = solvis.render_helper.RendererRepresentation()
+# Add the atom type and atom type specific rendering options that could go into the 
+# add_single_atom_as_sphere function of the plotter 
+render_rep.add_atom_type_rendering(atom_type=o_type,color=o_color, radius=atom_radius)
+
+# Loop through the solvation atoms and add them
+atom_string = "atom" 
+for solv_atom in solvation_shell.atoms:
+    iatom_type = solv_atom.number
+    iatom_tag = solv_atom.tag
+    iatom_name = atom_string + str(render_rep.num_atoms+1)
+    render_rep.add_atom(iatom_name, iatom_tag, iatom_type)
+
+# Change the color of the seventh atom 
+seventh_mol_name = list(render_rep.atoms.keys())[-1]
+render_rep.update_atom_render_opt(seventh_mol_name, color=seventh_neigh_color) 
 # ------------------------------------------------------------
 
 mesh_cmap = solvis.util.create_two_color_gradient("#3737d2", "red", gradient_start=0.0) # blue to red gradient

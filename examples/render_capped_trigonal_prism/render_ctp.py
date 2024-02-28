@@ -70,6 +70,10 @@ for solv_atom in solvation_shell.atoms:
 # Change the color of the seventh atom 
 seventh_mol_name = list(render_rep.atoms.keys())[-1]
 render_rep.update_atom_render_opt(seventh_mol_name, color=seventh_neigh_color) 
+
+# Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)
+for edge in edges:
+    breakpoint()
 # ------------------------------------------------------------
 
 mesh_cmap = solvis.util.create_two_color_gradient("#3737d2", "red", gradient_start=0.0) # blue to red gradient

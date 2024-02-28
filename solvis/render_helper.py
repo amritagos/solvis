@@ -53,12 +53,6 @@ class RendererRepresentation:
     def get_atom_rendering_options(self, atom_type):
         return self.atom_type_rendering.get(atom_type, {})
 
-    def get_bond_info(self, actor_name):
-        return self.bonds.get(actor_name)
-
-    def get_hydrogen_bond_info(self, actor_name):
-        return self.hydrogen_bonds.get(actor_name)
-
     def update_atom_render_opt(self, actor_name, **render_options):
         """
         Function to replace the value of a key in a flat dictionary.

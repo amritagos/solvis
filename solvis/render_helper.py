@@ -54,7 +54,7 @@ class RendererRepresentation:
         if actor_name is not None:
             name = actor_name
         else:
-            name = "hull_" + str(num_hulls)
+            name = "hull_" + str(self.num_hulls)
         self.hulls[name] = render_options
 
     def add_hydrogen_bond(self, actor_name, atom_tags, bond_type):
@@ -105,6 +105,25 @@ class RendererRepresentation:
             # Merge with previous options, overwriting
             options = merge_options(self.bonds.get(actor_name).get('render_options'), render_options)
             self.bonds[actor_name]['render_options'] = options
+            return True
+        else:
+            return False
+
+    def update_hull_render_opt(self, actor_name, **render_options):
+        """
+        Function to replace the value of a key for the hull rendering options.
+
+        Parameters:
+        - actor_name: The key in the atoms dict whose value needs to be replaced.
+        - render_options: The new render options.
+
+        Returns:
+        - True if the replacement was successful, False if actor_name was not found.
+        """
+        if actor_name in self.hulls:
+            # Merge with previous options, overwriting
+            options = merge_options(self.hulls.get(actor_name), render_options)
+            self.hulls[actor_name] = options
             return True
         else:
             return False

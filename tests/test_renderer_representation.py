@@ -125,6 +125,14 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     assert render_rep.bonds['bond_2'].get('a_color') == 'black'
     assert render_rep.bonds['bond_2'].get('b_color') == 'red'
 
+    # Add hull rendering options 
+    hull_options = dict(color='grey', show_edges=True, line_width=5, lighting=True, opacity=0.5)
+    render_rep.add_hull(**hull_options)
+    assert render_rep.hulls['hull_1'].get('color') == 'grey'
+    # Test that you can change the hull color to blue 
+    render_rep.update_hull_render_opt('hull_1', color='skyblue')
+    assert render_rep.hulls['hull_1'].get('color') == 'skyblue'
+
     # render_rep.add_atom_type_rendering(atom_type=fe_type)
     # options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     # pl_inter = solvis.visualization.AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)

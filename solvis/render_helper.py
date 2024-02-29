@@ -5,11 +5,13 @@ class RendererRepresentation:
         self.atoms = {}
         self.bonds = {}
         self.hydrogen_bonds = {}
+        self.hulls = {}
         self.atom_type_rendering = {}
         self.bond_type_rendering = {}
         self.num_atoms = 0
         self.num_bonds = 0
         self.num_hbonds = 0
+        self.num_hulls = 0
         self.default_bond_color = "black"
 
     def add_atom_type_rendering(self, atom_type, **render_options):
@@ -24,9 +26,10 @@ class RendererRepresentation:
         """
         self.bond_type_rendering[bond_type] = color
 
-    def add_atom(self, actor_name, atom_tag, atom_type, **render_options):
+    def add_atom(self, atom_tag, atom_type, actor_name=None,**render_options):
         """
-        render_options overrides the render options provided by atom type. 
+        render_options overrides the render options provided by atom type.
+        If you don't provide actor_name, a name is assigned using the number of atoms 
         """
         # Get the render options for the atom type, if they exist
         if atom_type in self.atom_type_rendering:
@@ -34,10 +37,25 @@ class RendererRepresentation:
         else:
             print("Warning: No atom type render options set for atom type", atom_type)
             options = render_options
-        atom_info = {'tag': atom_tag, 'type': atom_type, 'render_options': options}
-        self.atoms[actor_name] = atom_info
-        # Add to the number of atoms 
         self.num_atoms += 1
+        if actor_name is not None:
+            name = actor_name
+        else:
+            name = "atom_" + str(self.num_atoms)
+        atom_info = {'tag': atom_tag, 'type': atom_type, 'render_options': options}
+        self.atoms[name] = atom_info
+        # Add to the number of atoms 
+
+    def add_hull(self, actor_name=None, **render_options):
+        """
+        for options to: add_hull(self,hull:PolyData, **color_or_additional_mesh_options)
+        """
+        self.num_hulls += 1
+        if actor_name is not None:
+            name = actor_name
+        else:
+            name = "hull_" + str(num_hulls)
+        self.hulls[name] = render_options
 
     def add_hydrogen_bond(self, actor_name, atom_tags, bond_type):
         hydrogen_bond_info = {'tags': atom_tags, 'type': bond_type}
@@ -108,7 +126,7 @@ class RendererRepresentation:
                         return value['render_options']['color']
         return None
 
-    def add_bond(self, actor_name, bond_tags, bond_type, colorby="atomcolor",**render_options):
+    def add_bond(self, bond_tags, bond_type, colorby="atomcolor",actor_name=None,**render_options):
         """
         render_options can override any of the following (default options are:)
         radius=0.1, resolution=1, bond_gradient_start=0.0, asymmetric_gradient_start=None,**mesh_options_override_default
@@ -132,9 +150,13 @@ class RendererRepresentation:
             a_color = self.default_bond_color
             b_color = a_color
         # TODO: error handling here
-        bond_info = {'tags': bond_tags, 'type': bond_type, 'a_color': a_color, 'b_color': b_color,'render_options': render_options}
-        self.bonds[actor_name] = bond_info
         self.num_bonds += 1
+        if actor_name is not None:
+            name = actor_name
+        else:
+            name = "bond_" + str(self.num_bonds)
+        bond_info = {'tags': bond_tags, 'type': bond_type, 'a_color': a_color, 'b_color': b_color,'render_options': render_options}
+        self.bonds[name] = bond_info
 
     def update_bond_colors(self, actor_name, a_color, b_color):
         """

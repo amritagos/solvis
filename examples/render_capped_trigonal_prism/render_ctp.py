@@ -67,12 +67,11 @@ render_rep = solvis.render_helper.RendererRepresentation()
 render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=atom_radius)
 
 # Loop through the solvation atoms and add them
-atom_string = "atom"
+# atom names are "atom_1", "atom_2" etc 
 for solv_atom in solvation_shell.atoms:
     iatom_type = solv_atom.number
     iatom_tag = solv_atom.tag
-    iatom_name = atom_string + str(render_rep.num_atoms + 1)
-    render_rep.add_atom(iatom_name, iatom_tag, iatom_type)
+    render_rep.add_atom(iatom_tag, iatom_type)
 
 # Change the color of the seventh atom
 seventh_mol_name = list(render_rep.atoms.keys())[-1]

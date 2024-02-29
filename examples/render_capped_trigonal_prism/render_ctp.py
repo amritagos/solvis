@@ -56,7 +56,7 @@ edges = convex_hull.get_edges()
 # Bond and atom appearance
 o_color = "midnightblue"
 seventh_neigh_color = "red"
-atom_radius=0.1
+atom_radius = 0.1
 # Decide what kind of gradient shading you want for bonds
 bond_opt = dict(radius=0.1, resolution=1, bond_gradient_start=0.3)
 
@@ -67,7 +67,7 @@ render_rep = solvis.render_helper.RendererRepresentation()
 render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=atom_radius)
 
 # Loop through the solvation atoms and add them
-# atom names are "atom_1", "atom_2" etc 
+# atom names are "atom_1", "atom_2" etc
 for solv_atom in solvation_shell.atoms:
     iatom_type = solv_atom.number
     iatom_tag = solv_atom.tag
@@ -79,14 +79,11 @@ render_rep.update_atom_render_opt(seventh_mol_name, color=seventh_neigh_color)
 
 # Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)
 assigned_bond_type = 1
-bond_string = "bond"
 for edge in edges:
     ibond_name = bond_string + str(render_rep.num_bonds + 1)
-    render_rep.add_bond(
-        ibond_name, edge, assigned_bond_type, colorby="atomcolor", **bond_opt
-    )
+    render_rep.add_bond(edge, assigned_bond_type, colorby="atomcolor", **bond_opt)
 # ------------------------------------------------------------
-bond_radius=0.1
+bond_radius = 0.1
 bond_gradient_start = 0.3
 mesh_cmap = solvis.util.create_two_color_gradient(
     "#3737d2", "red", gradient_start=0.0

@@ -133,6 +133,20 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.update_hull_render_opt('hull_1', color='skyblue')
     assert render_rep.hulls['hull_1'].get('color') == 'skyblue'
 
+    # Test that you can delete things from the RendererRepresentation object
+    assert 'fe' in render_rep.atoms.keys() 
+    render_rep.delete_atom('fe')
+    assert 'fe' not in render_rep.atoms.keys()
+    # Delete the bonds 
+    render_rep.delete_bond('bond_1')
+    render_rep.delete_bond('bond_2')
+    assert len(render_rep.bonds) == 0 
+    # Delete the hull 
+    render_rep.delete_hull('hull_1')
+    assert len(render_rep.hulls) == 0
+    # This number refers to the number of hulls added, not the actual number of hulls
+    assert render_rep.num_hulls == 1 
+
     # render_rep.add_atom_type_rendering(atom_type=fe_type)
     # options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     # pl_inter = solvis.visualization.AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)

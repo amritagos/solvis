@@ -8,6 +8,9 @@ class RendererRepresentation:
         self.hulls = {}
         self.atom_type_rendering = {}
         self.bond_type_rendering = {}
+        # These numbers do not reflect the actual numbers of such items 
+        # since they can be deleted. They are just there to bookkeep and make sure
+        # you always have a unique actor_name 
         self.num_atoms = 0
         self.num_bonds = 0
         self.num_hbonds = 0
@@ -66,6 +69,9 @@ class RendererRepresentation:
         return self.atoms.get(actor_name).get('render_options')
 
     def get_tag_from_atom_name(self, actor_name):
+        """
+        Get the atom tag, given the atom actor name in the self.atoms dictionary
+        """
         return self.atoms.get(actor_name).get('tag')
 
     def get_atom_rendering_options(self, atom_type):
@@ -191,6 +197,39 @@ class RendererRepresentation:
         if actor_name in self.bonds:
             self.bonds[actor_name]['a_color'] = a_color
             self.bonds[actor_name]['b_color'] = b_color
+            return True
+        else:
+            return False
+
+    def delete_atom(self, actor_name):
+        """
+        Delete an atom from the self.atoms dict, given the actor name (key).
+        If not found, returns False
+        """
+        if actor_name in self.atoms:
+            del self.atoms[actor_name]
+            return True
+        else:
+            return False
+
+    def delete_bond(self, actor_name):
+        """
+        Delete a bond from the self.bonds dict, given the actor name (key).
+        If not found, returns False
+        """
+        if actor_name in self.bonds:
+            del self.bonds[actor_name]
+            return True
+        else:
+            return False
+
+    def delete_hull(self, actor_name):
+        """
+        Delete a hull from the self.bonds dict, given the actor name (key).
+        If not found, returns False
+        """
+        if actor_name in self.hulls:
+            del self.hulls[actor_name]
             return True
         else:
             return False

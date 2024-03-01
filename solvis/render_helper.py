@@ -16,12 +16,16 @@ class RendererRepresentation:
         self.num_hbonds = 0
         self.num_hulls = 0
         self.default_bond_color = "black"
+        self.default_atom_color = "black"
 
-    def add_atom_type_rendering(self, atom_type, **render_options):
+    def add_atom_type_rendering(self, atom_type, color=None, **render_options):
         """
         Render options that you can put into add_single_atom_as_sphere in the plotter object 
         """
-        self.atom_type_rendering[atom_type] = render_options
+        if color is None:
+            color = self.default_atom_color
+        atom_info = dict(color=color, render_options=render_options)
+        self.atom_type_rendering[atom_type] = atom_info
 
     def add_bond_type_rendering(self, bond_type, color=None, **render_options):
         """
@@ -32,23 +36,28 @@ class RendererRepresentation:
         bond_info = dict(color=color, render_options=render_options)
         self.bond_type_rendering[bond_type] = bond_info
 
-    def add_atom(self, atom_tag, atom_type, actor_name=None,**render_options):
+    def add_atom(self, atom_tag, atom_type, color=None, actor_name=None,**render_options):
         """
         render_options overrides the render options provided by atom type.
         If you don't provide actor_name, a name is assigned using the number of atoms 
         """
         # Get the render options for the atom type, if they exist
         if atom_type in self.atom_type_rendering:
-            options = merge_options_keeping_override(self.atom_type_rendering[atom_type], render_options)
+            options = merge_options_keeping_override(self.atom_type_rendering[atom_type]['render_options'], render_options)
+            if color is None:
+                color = self.atom_type_rendering[atom_type]['color']
         else:
             print("Warning: No atom type render options set for atom type", atom_type)
             options = render_options
+            if color is None:
+                print("Warning: Setting atom color to default.")
+                color = self.default_atom_color
         self.num_atoms += 1
         if actor_name is not None:
             name = actor_name
         else:
             name = "atom_" + str(self.num_atoms)
-        atom_info = {'tag': atom_tag, 'type': atom_type, 'render_options': options}
+        atom_info = {'tag': atom_tag, 'type': atom_type, 'color':color,'render_options': options}
         self.atoms[name] = atom_info
         # Add to the number of atoms 
 
@@ -71,6 +80,9 @@ class RendererRepresentation:
     def get_render_info_from_atom_name(self, actor_name):
         return self.atoms.get(actor_name).get('render_options')
 
+    def get_color_from_atom_name(self, actor_name):
+        return self.atoms.get(actor_name).get('color')
+
     def get_tag_from_atom_name(self, actor_name):
         """
         Get the atom tag, given the atom actor name in the self.atoms dictionary
@@ -78,7 +90,7 @@ class RendererRepresentation:
         return self.atoms.get(actor_name).get('tag')
 
     def get_atom_rendering_options(self, atom_type):
-        return self.atom_type_rendering.get(atom_type, {})
+        return self.atom_type_rendering.get(atom_type).get('render_options')
 
     def update_atom_render_opt(self, actor_name, **render_options):
         """
@@ -95,6 +107,23 @@ class RendererRepresentation:
             # Merge with previous options, overwriting
             options = merge_options(self.atoms.get(actor_name).get('render_options'), render_options)
             self.atoms[actor_name]['render_options'] = options
+            return True
+        else:
+            return False
+
+    def update_atom_color(self, actor_name, color):
+        """
+        Function to change the color of an atom, given the actor_name 
+
+        Parameters:
+        - actor_name: The key in the atoms dict whose value needs to be replaced.
+        - render_options: The new render options.
+
+        Returns:
+        - True if the replacement was successful, False if actor_name was not found.
+        """
+        if actor_name in self.atoms:
+            self.atoms[actor_name]['color'] = color
             return True
         else:
             return False
@@ -137,9 +166,9 @@ class RendererRepresentation:
         else:
             return False
 
-    def find_color_option_by_atom_tag(self, target_atom_tag):
+    def find_color_by_atom_tag(self, target_atom_tag):
         """
-        Function to find the 'color' option in 'render_options' based on the value of 'tag' in a nested dictionary.
+        Function to find the 'color' based on the value of 'tag' in a nested dictionary.
 
         Parameters:
         - target_atom_tag: The value of 'tag' to search for.
@@ -150,8 +179,8 @@ class RendererRepresentation:
         for key, value in self.atoms.items():
             if isinstance(value, dict):
                 if 'tag' in value and value['tag'] == target_atom_tag:
-                    if 'render_options' in value and 'color' in value['render_options']:
-                        return value['render_options']['color']
+                    if 'color' in value:
+                        return value['color']
         return None
 
     def add_bond(self, bond_tags, bond_type, colorby="atomcolor",actor_name=None,**render_options):
@@ -164,8 +193,8 @@ class RendererRepresentation:
         # We need a_color and b_color to render the bond 
         if colorby=="atomcolor":
             # Get a_color and b_color from the atom colors saved in the atoms dict
-            a_color = self.find_color_option_by_atom_tag(bond_tags[0])
-            b_color = self.find_color_option_by_atom_tag(bond_tags[-1])
+            a_color = self.find_color_by_atom_tag(bond_tags[0])
+            b_color = self.find_color_by_atom_tag(bond_tags[-1])
         elif colorby=="bondtype":
             if bond_type in self.bond_type_rendering.keys():
                 a_color = self.bond_type_rendering[bond_type].get('color')

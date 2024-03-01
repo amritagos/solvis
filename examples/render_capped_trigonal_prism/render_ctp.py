@@ -84,12 +84,18 @@ for edge in edges:
     tag1 = solvation_shell.tag_manager.lookup_tag_by_index(edge[0])
     tag2 = solvation_shell.tag_manager.lookup_tag_by_index(edge[-1])
     render_rep.add_bond([tag1,tag2], assigned_bond_type, colorby="atomcolor", **bond_opt)
-# ------------------------------------------------------------
-bond_radius = 0.1
-bond_gradient_start = 0.3
+
+# Add the hull 
 mesh_cmap = solvis.util.create_two_color_gradient(
     "#3737d2", "red", gradient_start=0.0
 )  # blue to red gradient
+hull_options = dict(
+        cmap=mesh_cmap, clim=[dist[4], dist[-1]], scalars=dist
+    )
+render_rep.add_hull(**hull_options)
+# ------------------------------------------------------------
+bond_radius = 0.1
+bond_gradient_start = 0.3
 point_colours = [
     "midnightblue",
     "midnightblue",

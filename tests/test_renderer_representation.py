@@ -73,16 +73,18 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.add_atom_type_rendering(
         atom_type=fe_type, color=fe_color, radius=fe_radius
     )
+    assert render_rep.atom_type_rendering[fe_type].get('color') == "black"
     fe_atom_options = render_rep.get_atom_rendering_options(atom_type=fe_type)
-    assert fe_atom_options == {"color": "black", "radius": 0.3}
+    assert fe_atom_options == {"radius": 0.3}
     # Atom type of the O atoms
     render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=o_radius)
+    assert render_rep.atom_type_rendering[o_type].get('color') == "midnightblue"
     o_atom_options = render_rep.get_atom_rendering_options(atom_type=o_type)
-    assert o_atom_options == {"color": "midnightblue", "radius": 0.2}
+    assert o_atom_options == {"radius": 0.2}
 
     # Now add the Fe atom as the center
     render_rep.add_atom(
-        "center", fe_type, "fe"
+        "center", fe_type, color=None, actor_name="fe"
     )  # Handle atom_tag='center' for solvation center! TODO
     assert render_rep.num_atoms == 1
     # Loop through the solvation atoms and add them
@@ -109,13 +111,13 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
 
     # Change the colour of the furthest solvent atom to red
     seventh_mol_name = list(render_rep.atoms.keys())[-1]
-    render_rep.update_atom_render_opt(seventh_mol_name, color="red")
+    render_rep.update_atom_color(seventh_mol_name, color="red")
     seventh_mol_options = render_rep.get_render_info_from_atom_name(seventh_mol_name)
-    assert seventh_mol_options == {"color": "red", "radius": 0.2}
+    assert seventh_mol_options == {"radius": 0.2}
     # Check that you can access the new color of this atom from the atom tag
     # This can be used for getting bond colors
     seventh_mol_tag = render_rep.atoms.get(seventh_mol_name).get("tag")
-    seventh_mol_color = render_rep.find_color_option_by_atom_tag(seventh_mol_tag)
+    seventh_mol_color = render_rep.find_color_by_atom_tag(seventh_mol_tag)
     assert seventh_mol_color == "red"
 
     # Create a bond between the first and last atoms
@@ -227,7 +229,7 @@ def test_renderer_helper_populate(capped_trigonal_prism_solv_system):
 
     # Change the colour of the seventh atom
     seventh_mol_name = list(render_rep.atoms.keys())[-1]
-    render_rep.update_atom_render_opt(seventh_mol_name, color="red")
+    render_rep.update_atom_color(seventh_mol_name, color="red")
     seventh_mol_options = render_rep.get_render_info_from_atom_name(seventh_mol_name)
 
     # Add bonds from the center

@@ -1,17 +1,17 @@
 from ase import Atom, Atoms
 from ase.data import chemical_symbols
-from ase.io import lammpsdata, read 
+from ase.io import lammpsdata, read
 import numpy as np
 from scipy.spatial import ConvexHull
-from pathlib import Path 
+from pathlib import Path
 from pyvista import PolyData
 
 import solvis
 from solvis.visualization import AtomicPlotter
 
-# Input filename 
+# Input filename
 script_dir = Path(__file__).resolve().parent
-infilename = script_dir / '../../resources/octahedral_solvation_shell.lammpstrj'
+infilename = script_dir / "../../resources/octahedral_solvation_shell.lammpstrj"
 # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
 fe_type = 3
 h_type = 2
@@ -19,9 +19,9 @@ o_type = 1
 imagename = script_dir / "octahedral_shell.png"
 trimmed_img_name = script_dir / "trimmed.png"
 
-# Bond and atom appearance 
-# Decide what kind of gradient shading you want for bonds 
-set_gradient = 0.5 # Asymmetric bond gradient , not used here 
+# Bond and atom appearance
+# Decide what kind of gradient shading you want for bonds
+set_gradient = 0.5  # Asymmetric bond gradient , not used here
 bond_radius = 0.15
 atom_radius = 0.2
 fe_center_radius = 0.3
@@ -29,91 +29,115 @@ fe_center_radius = 0.3
 nearest_neigh = 7
 
 # ------------------------------------------------------
-# Glean the coordinates from the LAMMPS trajectory file 
+# Glean the coordinates from the LAMMPS trajectory file
 
-# Read in the current frame 
-currentframe = read(infilename, format="lammps-dump-text") # Read in the last frame of the trajectory
-
-pos = currentframe.get_positions()
-
-# Get just the O atoms 
-o_atoms = currentframe[[atom.index for atom in currentframe if atom.number==o_type]]
-o_atoms_pos = o_atoms.get_positions()
-
-# Indices of the Fe atoms
-fe_ind = currentframe.symbols.search(chemical_symbols[fe_type])
-# Here we only have one Fe atom 
-
-fe_pos_query_pnt = currentframe.get_positions()[fe_ind[0]]
-
-# Box size lengths 
+# Read in the current frame
+currentframe = read(
+    infilename, format="lammps-dump-text"
+)  # Read in the last frame of the trajectory
+# Box size lengths
 box_len = currentframe.get_cell_lengths_and_angles()[:3]
-# 7 Nearest neighbours
-k=nearest_neigh+1 # including the central atom 
-dist, neigh_ind = solvis.util.k_nearest_neighbours(pos, fe_pos_query_pnt, k, box_len)
-all_pos = pos[neigh_ind]
 
-# Nearest positions excluding the central atom 
-solvent_pos = all_pos[1:]
-k_near_pos = solvent_pos[:6] # closest six solvent molecules only!
+# Make a System object
+ctp_system = solvis.system.System(currentframe, expand_box=True)
 
-# Get the convex hull using the scipy wrapper for QHull
-hull = ConvexHull(k_near_pos)
-# Number of faces, which is also the number of cells in the subsequent polyhull
-num_faces = len(hull.simplices)
- 
-area = hull.area
-vol = hull.volume 
+# Find the Fe ion (there is only one in this system)
+# This will be our central atom
+fe_ind = ctp_system.atoms.symbols.search(chemical_symbols[fe_type])
+fe_pos_query_pnt = ctp_system.atoms.get_positions()[fe_ind[0]]
 
-# Calculate the sphericity from the volume and area 
-sph_value = solvis.util.sphericity(vol,area)
-print('The calculated sphericity with 6 neighbours is', sph_value, '\n')
+# contains_solvation_center should be set to False if the solvent atoms do not contain the center
+solvation_shell = ctp_system.create_solvation_shell_from_center(
+    central_pnt=fe_pos_query_pnt,
+    num_neighbours=7,
+    contains_solvation_center=False,
+    solvent_atom_types=[o_type],
+)
 
-# Convert the convex hull into a pyvista PolyData object
-faces_pyvistaformat = np.column_stack((3*np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)).flatten()
-polyhull = PolyData(k_near_pos, faces_pyvistaformat)
-
+convex_hull = solvation_shell.build_convex_hull_k_neighbours(num_neighbours=6)
+# Calculate the sphericity from the volume and area
+sph_value = solvis.util.sphericity(convex_hull.volume, convex_hull.area)
+print("The calculated sphericity with 6 neighbours is", sph_value, "\n")
 # ------------------------------------------------------------
 
-hull_color = "#c7c7c7"
-solvent_point_colours = ["midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "midnightblue", "red"]
+# Bond and atom appearance
+o_color = "midnightblue"
+center_type = 0
 central_point_colour = "black"
+seventh_neigh_color = "red"
+o_radius = 0.2
+fe_center_radius = 0.3
+# Decide what kind of gradient shading you want for bonds
+bond_opt = dict(radius=0.15, resolution=1)
+bondtype = 1
 
-# For interactive plotting 
+# Build the RendererRepresentation object
+render_rep = solvis.render_helper.RendererRepresentation()
+# Add the atom type and atom type specific rendering options
+render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=o_radius)
+render_rep.add_atom_type_rendering(
+    atom_type=center_type, color=central_point_colour, radius=fe_center_radius
+)
+render_rep.add_bond_type_rendering(bond_type=bondtype, color=o_color, **bond_opt)
+
+# Add the atoms from the solvation shell
+solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(
+    render_rep, solvation_shell, include_center=True
+)
+
+# Change the color of the seventh atom
+seventh_mol_name = list(render_rep.atoms.keys())[-1]
+render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
+
+# Add bonds from the center to the solvent atoms
+solvis.vis_initializers.fill_render_rep_bonds_from_solv_shell_center(
+    render_rep, solvation_shell, bondtype, colorby="bondtype"
+)
+
+# Change the color of the bond from the seventh atom
+# should be the last bond
+bond_name = list(render_rep.bonds.keys())[-1]
+render_rep.update_bond_colors(
+    bond_name, a_color=seventh_neigh_color, b_color=seventh_neigh_color
+)
+
+# Add the hull
+hull_color = "#c7c7c7"
+hull_options = dict(
+    color=hull_color, show_edges=True, line_width=5, lighting=True, opacity=0.5
+)
+render_rep.add_hull(**hull_options)
+# ------------------------------------------------------------
+
+# For interactive plotting
 pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)
-# Add the hull as a mesh 
-pl_inter.add_hull(polyhull,color=hull_color, show_edges=True, line_width=5, lighting=True, opacity=0.5)
-# Create the bonds corresponding to the edges and add them to the plotter
-# pl_inter.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, point_colors=solvent_point_colours, central_point_color=central_point_colour,
-#     radius=bond_radius, resolution=1,asymmetric_gradient_start=set_gradient)
-# If you want single color bonds 
-pl_inter.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, single_bond_colors=solvent_point_colours,
-    radius=bond_radius, resolution=1)
-pl_inter.add_atoms_as_spheres(solvent_pos, solvent_point_colours, radius=atom_radius)
-# Add the Fe solvation center as a sphere with a different size 
-pl_inter.add_single_atom_as_sphere(fe_pos_query_pnt, central_point_colour, radius=fe_center_radius, actor_name="center")
-# Open the interactive window 
-pl_inter.interactive_window(delete_actor=True) 
 
+# Populate plotter using the RendererRepresentation object
+solvis.vis_initializers.populate_plotter_from_solv_shell(
+    pl_inter, render_rep, solvation_shell, convex_hull_list=[convex_hull]
+)
+# Open the interactive window
+pl_inter.interactive_window(delete_actor=True)
+
+# Delete the selected actors from the RendererRepresentation object
+for actor_name in pl_inter.selected_actors:
+    render_rep.delete_actor(actor_name)
 # ---------------------------
 # Now render the image (offscreen=True)
 
-pl_render = AtomicPlotter(interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=False)
-# Add the hull as a mesh 
-pl_render.add_hull(polyhull,color=hull_color, show_edges=True, line_width=5, lighting=True, opacity=0.5)
-# Create the bonds corresponding to the edges and add them to the plotter
-pl_render.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, single_bond_colors=solvent_point_colours,
-    radius=bond_radius, resolution=1)
-# Add the solvent atoms as spheres
-pl_render.add_atoms_as_spheres(solvent_pos, solvent_point_colours, radius=atom_radius)
-# Add the Fe solvation center as a sphere with a different size 
-pl_render.add_single_atom_as_sphere(fe_pos_query_pnt, central_point_colour, radius=fe_center_radius, actor_name="center")
+pl_render = AtomicPlotter(
+    interactive_mode=False, window_size=[4000, 4000], depth_peeling=True, shadows=False
+)
+# Populate plotter using the RendererRepresentation object
+solvis.vis_initializers.populate_plotter_from_solv_shell(
+    pl_render, render_rep, solvation_shell, convex_hull_list=[convex_hull]
+)
 # Get and set the camera position found from the last frame in the interactive mode
 inter_cpos = pl_inter.interactive_camera_position[-1]
 print("Camera position will be set to ", inter_cpos)
-# Save image 
+# Save image
 pl_render.render_image(imagename, inter_cpos)
 
 # Trim the image
-trimmed_im = solvis.util.trim(imagename,10)
+trimmed_im = solvis.util.trim(imagename, 10)
 trimmed_im.save(trimmed_img_name)

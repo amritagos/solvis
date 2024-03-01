@@ -78,10 +78,12 @@ seventh_mol_name = list(render_rep.atoms.keys())[-1]
 render_rep.update_atom_render_opt(seventh_mol_name, color=seventh_neigh_color)
 
 # Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)
+# Edges should be with tags here, not indices 
 assigned_bond_type = 1
 for edge in edges:
-    ibond_name = bond_string + str(render_rep.num_bonds + 1)
-    render_rep.add_bond(edge, assigned_bond_type, colorby="atomcolor", **bond_opt)
+    tag1 = solvation_shell.tag_manager.lookup_tag_by_index(edge[0])
+    tag2 = solvation_shell.tag_manager.lookup_tag_by_index(edge[-1])
+    render_rep.add_bond([tag1,tag2], assigned_bond_type, colorby="atomcolor", **bond_opt)
 # ------------------------------------------------------------
 bond_radius = 0.1
 bond_gradient_start = 0.3

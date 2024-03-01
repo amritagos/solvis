@@ -73,12 +73,12 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.add_atom_type_rendering(
         atom_type=fe_type, color=fe_color, radius=fe_radius
     )
-    assert render_rep.atom_type_rendering[fe_type].get('color') == "black"
+    assert render_rep.atom_type_rendering[fe_type].get("color") == "black"
     fe_atom_options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     assert fe_atom_options == {"radius": 0.3}
     # Atom type of the O atoms
     render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=o_radius)
-    assert render_rep.atom_type_rendering[o_type].get('color') == "midnightblue"
+    assert render_rep.atom_type_rendering[o_type].get("color") == "midnightblue"
     o_atom_options = render_rep.get_atom_rendering_options(atom_type=o_type)
     assert o_atom_options == {"radius": 0.2}
 

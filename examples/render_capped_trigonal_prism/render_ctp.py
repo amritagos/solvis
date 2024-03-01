@@ -45,9 +45,6 @@ convex_hull = solvation_shell.build_convex_hull_k_neighbours(num_neighbours=7)
 sph_value = solvis.util.sphericity(convex_hull.volume, convex_hull.area)
 print("The calculated sphericity with 7 neighbours is", sph_value, "\n")
 
-# Convert the convex hull into a pyvista PolyData object
-polyhull = convex_hull.pyvista_hull_from_convex_hull()
-
 # Get a numPy array of edges (n_edges,2)
 edges = convex_hull.get_edges()
 
@@ -59,39 +56,35 @@ seventh_neigh_color = "red"
 atom_radius = 0.1
 # Decide what kind of gradient shading you want for bonds
 bond_opt = dict(radius=0.1, resolution=1, bond_gradient_start=0.3)
+bondtype = 1
 
 # Build the RendererRepresentation object
 render_rep = solvis.render_helper.RendererRepresentation()
-# Add the atom type and atom type specific rendering options that could go into the
-# add_single_atom_as_sphere function of the plotter
+# Add the atom type and atom type specific rendering options 
 render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=atom_radius)
+render_rep.add_bond_type_rendering(bond_type=bondtype, color=None, **bond_opt)
 
-# Loop through the solvation atoms and add them
-# atom names are "atom_1", "atom_2" etc
-for solv_atom in solvation_shell.atoms:
-    iatom_type = solv_atom.number
-    iatom_tag = solv_atom.tag
-    render_rep.add_atom(iatom_tag, iatom_type)
+# Add the atoms from the solvation shell
+solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(render_rep, solvation_shell, include_center=False)
 
 # Change the color of the seventh atom
 seventh_mol_name = list(render_rep.atoms.keys())[-1]
-render_rep.update_atom_render_opt(seventh_mol_name, color=seventh_neigh_color)
+render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
 
 # Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)
-# Edges should be with tags here, not indices 
-assigned_bond_type = 1
+# Edges should be with tags here, not indices
 for edge in edges:
     tag1 = solvation_shell.tag_manager.lookup_tag_by_index(edge[0])
     tag2 = solvation_shell.tag_manager.lookup_tag_by_index(edge[-1])
-    render_rep.add_bond([tag1,tag2], assigned_bond_type, colorby="atomcolor", **bond_opt)
+    render_rep.add_bond(
+        [tag1, tag2], bondtype, colorby="atomcolor"
+    )
 
-# Add the hull 
+# Add the hull
 mesh_cmap = solvis.util.create_two_color_gradient(
     "#3737d2", "red", gradient_start=0.0
 )  # blue to red gradient
-hull_options = dict(
-        cmap=mesh_cmap, clim=[dist[4], dist[-1]], scalars=dist
-    )
+hull_options = dict(cmap=mesh_cmap, clim=[dist[4], dist[-1]], scalars=dist)
 render_rep.add_hull(**hull_options)
 # ------------------------------------------------------------
 bond_radius = 0.1

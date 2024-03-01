@@ -51,7 +51,8 @@ class System:
         """
         # Do nothing if pbcs have not been set
         if False in self.atoms.pbc:
-            print("Warning: PBCs are set to false, for ", self.__class__.__name__)
+            if self.__class__.__name__ == System:
+                print("Warning: PBCs are set to false, for ", self.__class__.__name__)
             return
 
         x_min, y_min, z_min = np.min(self.atoms.get_positions(), axis=0)

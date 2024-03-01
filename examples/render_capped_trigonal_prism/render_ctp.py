@@ -60,12 +60,14 @@ bondtype = 1
 
 # Build the RendererRepresentation object
 render_rep = solvis.render_helper.RendererRepresentation()
-# Add the atom type and atom type specific rendering options 
+# Add the atom type and atom type specific rendering options
 render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=atom_radius)
 render_rep.add_bond_type_rendering(bond_type=bondtype, color=None, **bond_opt)
 
 # Add the atoms from the solvation shell
-solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(render_rep, solvation_shell, include_center=False)
+solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(
+    render_rep, solvation_shell, include_center=False
+)
 
 # Change the color of the seventh atom
 seventh_mol_name = list(render_rep.atoms.keys())[-1]
@@ -74,11 +76,9 @@ render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
 # Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)
 # Edges should be with tags here, not indices
 for edge in edges:
-    tag1 = solvation_shell.tag_manager.lookup_tag_by_index(edge[0])
-    tag2 = solvation_shell.tag_manager.lookup_tag_by_index(edge[-1])
-    render_rep.add_bond(
-        [tag1, tag2], bondtype, colorby="atomcolor"
-    )
+    tag1 = solvation_shell.atoms.get_tags()[edge[0]]
+    tag2 = solvation_shell.atoms.get_tags()[edge[1]]
+    render_rep.add_bond([tag1, tag2], bondtype, colorby="atomcolor")
 
 # Add the hull
 mesh_cmap = solvis.util.create_two_color_gradient(
@@ -87,56 +87,37 @@ mesh_cmap = solvis.util.create_two_color_gradient(
 hull_options = dict(cmap=mesh_cmap, clim=[dist[4], dist[-1]], scalars=dist)
 render_rep.add_hull(**hull_options)
 # ------------------------------------------------------------
-bond_radius = 0.1
-bond_gradient_start = 0.3
-point_colours = [
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "red",
-]
 
 # For interactive plotting
 # NOTE: Shadows and opacity won't work together without pbr
 pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=True)
-# Add the hull as a mesh
-pl_inter.add_hull(polyhull, cmap=mesh_cmap, clim=[dist[4], dist[-1]], scalars=dist)
-# Create the bonds corresponding to the edges and add them to the plotter
-pl_inter.create_bonds_from_edges(
-    pos,
-    edges,
-    point_colors=point_colours,
-    radius=bond_radius,
-    resolution=1,
-    bond_gradient_start=bond_gradient_start,
+# Populate plotter using the RendererRepresentation object
+solvis.vis_initializers.populate_plotter_from_solv_shell(
+    pl_inter, render_rep, solvation_shell, convex_hull_list=[convex_hull]
 )
-# Add the atoms as spheres
-pl_inter.add_atoms_as_spheres(pos, point_colours, radius=atom_radius)
 # Remove bonds or atoms interactively
 pl_inter.interactive_window(delete_actor=True)
+print(pl_inter.selected_actors)
 
-# # ---------------------------
-# # Now render the image (offscreen=True)
+# Delete the selected actors from the RendererRepresentation object
+for actor_name in pl_inter.selected_actors:
+    render_rep.delete_actor(actor_name)
+# ---------------------------
+# Now render the image (offscreen=True)
 
-# pl_render = AtomicPlotter(interactive_mode=False, window_size=[4000,4000], depth_peeling=True, shadows=True)
-# # Add the hull as a mesh
-# pl_render.add_hull(polyhull, cmap=mesh_cmap,clim=[dist[4],dist[-1]],scalars=dist)
-# # Create the bonds corresponding to the edges and add them to the plotter
-# pl_render.create_bonds_from_edges(pos, edges, point_colors=point_colours,
-#     radius=bond_radius, resolution=1,bond_gradient_start=bond_gradient_start)
-# # Delete actors selected interactively
-# pl_render.plotter.remove_actor(pl_inter.selected_actors)
-# # Add the atoms as spheres
-# pl_render.add_atoms_as_spheres(pos, point_colours, radius=atom_radius)
-# # Get and set the camera position found from the last frame in the interactive mode
-# inter_cpos = pl_inter.interactive_camera_position[-1]
-# print("Camera position will be set to ", inter_cpos)
-# # Save image
-# pl_render.render_image(imagename, inter_cpos)
+pl_render = AtomicPlotter(
+    interactive_mode=False, window_size=[4000, 4000], depth_peeling=True, shadows=True
+)
+# Populate plotter using the RendererRepresentation object
+solvis.vis_initializers.populate_plotter_from_solv_shell(
+    pl_render, render_rep, solvation_shell, convex_hull_list=[convex_hull]
+)
+# Get and set the camera position found from the last frame in the interactive mode
+inter_cpos = pl_inter.interactive_camera_position[-1]
+print("Camera position will be set to ", inter_cpos)
+# Save image
+pl_render.render_image(imagename, inter_cpos)
 
-# # Trim the image
-# trimmed_im = solvis.util.trim(imagename,10)
-# trimmed_im.save(trimmed_img_name)
+# Trim the image
+trimmed_im = solvis.util.trim(imagename, 10)
+trimmed_im.save(trimmed_img_name)

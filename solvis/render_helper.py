@@ -279,6 +279,22 @@ class RendererRepresentation:
         else:
             return False
 
+    def delete_actor(self, actor_name):
+        """
+        Delete an actor from atoms, bonds or hulls
+        """
+        if actor_name in self.atoms:
+            del self.atoms[actor_name]
+            return True
+        elif actor_name in self.bonds:
+            del self.bonds[actor_name]
+            return True
+        elif actor_name in self.hulls:
+            del self.hulls[actor_name]
+            return True
+        else:
+            return False
+
     def delete_atom(self, actor_name):
         """
         Delete an atom from the self.atoms dict, given the actor name (key).

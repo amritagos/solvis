@@ -40,10 +40,10 @@ def coord_from_tag(atom_tag, solv_shell):
     """
     Get the coordinate, given an atom tag (if center, then use SolvationShell center)
     """
-    if atom_type == "center":
+    if atom_tag == "center":
         return solv_shell.center
     else:  # TODO some error handling?
-        index = solv_shell.tag_manager.lookup_tag_by_index(atom_tag)
+        index = solv_shell.tag_manager.lookup_index_by_tag(atom_tag)
         return solv_shell.atoms.get_positions()[index]
 
 
@@ -69,13 +69,6 @@ def populate_plotter_from_solv_shell(
 
     # Add the bonds
     # Loop through all bonds
-    bond_info = {
-        "tags": bond_tags,
-        "type": bond_type,
-        "a_color": a_color,
-        "b_color": b_color,
-        "render_options": options,
-    }
     for actor_name in render_rep.bonds.keys():
         bond_tags = render_rep.bonds[actor_name]["tags"]
         coord_a = coord_from_tag(bond_tags[0], solv_shell)
@@ -102,6 +95,6 @@ def populate_plotter_from_solv_shell(
     for i, actor_name in enumerate(render_rep.hulls.keys()):
         # Convert the convex hull into a pyvista PolyData object
         polyhull = convex_hull_list[i].pyvista_hull_from_convex_hull()
-        render_opt = render_rep.hulls[actor_name]["render_options"]
+        render_opt = render_rep.hulls[actor_name]
         # Add the hull to the plotter
         plotter.add_hull(polyhull, **render_opt)

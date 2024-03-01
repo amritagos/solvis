@@ -231,11 +231,22 @@ def trim(imagefilename, border_pixels=0):
 # Merge options, to be used for kwargs and default dictionary values
 # For all options inside default_options, if override has the value, set it
 # or else keep the default_options value. Ignore all other keys inside override 
-def merge_options(default_options, override):
+def merge_options(default_options, override_dict):
     result = {}
     for key in default_options:
-        if key in override:
-            result[key] = override[key]
+        if key in override_dict:
+            result[key] = override_dict[key]
         else:
             result[key] = default_options[key]
+    return result
+
+
+# Merge options, to be used for kwargs and bond/atom render options set already
+# For all options inside default_options, if override has the value, set it
+# or else keep the default_options value. Also keep all extra keys inside override  
+def merge_options_keeping_override(old_options, override_dict):
+    result = old_options
+
+    for key in override_dict:
+        result[key] = override_dict[key]
     return result

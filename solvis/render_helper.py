@@ -1,4 +1,4 @@
-from .util import merge_options
+from .util import merge_options_keeping_override, merge_options
 
 class RendererRepresentation:
     def __init__(self):
@@ -23,11 +23,14 @@ class RendererRepresentation:
         """
         self.atom_type_rendering[atom_type] = render_options
 
-    def add_bond_type_rendering(self, bond_type, color):
+    def add_bond_type_rendering(self, bond_type, color=None, **render_options):
         """
         Assign a particular color to all bonds of a particular bond type
         """
-        self.bond_type_rendering[bond_type] = color
+        if color is None:
+            color = self.default_bond_color
+        bond_info = dict(color=color, render_options=render_options)
+        self.bond_type_rendering[bond_type] = bond_info
 
     def add_atom(self, atom_tag, atom_type, actor_name=None,**render_options):
         """
@@ -36,7 +39,7 @@ class RendererRepresentation:
         """
         # Get the render options for the atom type, if they exist
         if atom_type in self.atom_type_rendering:
-            options = merge_options(self.atom_type_rendering[atom_type], render_options)
+            options = merge_options_keeping_override(self.atom_type_rendering[atom_type], render_options)
         else:
             print("Warning: No atom type render options set for atom type", atom_type)
             options = render_options
@@ -109,7 +112,7 @@ class RendererRepresentation:
         """
         if actor_name in self.bonds:
             # Merge with previous options, overwriting
-            options = merge_options(self.bonds.get(actor_name).get('render_options'), render_options)
+            options = merge_options_keeping_override(self.bonds.get(actor_name).get('render_options'), render_options)
             self.bonds[actor_name]['render_options'] = options
             return True
         else:
@@ -128,7 +131,7 @@ class RendererRepresentation:
         """
         if actor_name in self.hulls:
             # Merge with previous options, overwriting
-            options = merge_options(self.hulls.get(actor_name), render_options)
+            options = merge_options_keeping_override(self.hulls.get(actor_name), render_options)
             self.hulls[actor_name] = options
             return True
         else:
@@ -165,7 +168,7 @@ class RendererRepresentation:
             b_color = self.find_color_option_by_atom_tag(bond_tags[-1])
         elif colorby=="bondtype":
             if bond_type in self.bond_type_rendering.keys():
-                a_color = self.bond_type_rendering[bond_type]
+                a_color = self.bond_type_rendering[bond_type].get('color')
                 b_color = a_color
             else:
                 print("Warning: Setting bonds to default since colorby was bondtype, but bond_type color was not set\n")
@@ -175,12 +178,18 @@ class RendererRepresentation:
             a_color = self.default_bond_color
             b_color = a_color
         # TODO: error handling here
+        # Get the render options for the atom type, if they exist
+        if bond_type in self.bond_type_rendering:
+            options = merge_options_keeping_override(self.bond_type_rendering[bond_type].get('render_options'), render_options)
+        else:
+            print("Warning: No bond type render options set for bond type", bond_type)
+            options = render_options
         self.num_bonds += 1
         if actor_name is not None:
             name = actor_name
         else:
             name = "bond_" + str(self.num_bonds)
-        bond_info = {'tags': bond_tags, 'type': bond_type, 'a_color': a_color, 'b_color': b_color,'render_options': render_options}
+        bond_info = {'tags': bond_tags, 'type': bond_type, 'a_color': a_color, 'b_color': b_color,'render_options': options}
         self.bonds[name] = bond_info
 
     def update_bond_colors(self, actor_name, a_color, b_color):

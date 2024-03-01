@@ -112,7 +112,7 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     
     # Add a bond type color 
     render_rep.add_bond_type_rendering(bond_type=assigned_bond_type, color="dimgrey")
-    assert render_rep.bond_type_rendering[assigned_bond_type] == "dimgrey"
+    assert render_rep.bond_type_rendering[assigned_bond_type].get('color') == "dimgrey"
     
     # Add a bond between the first and second atoms, coloured according to the bond_type color
     tag3 = capped_trigonal_prism_solv_system.atoms[1].tag
@@ -124,6 +124,9 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.update_bond_colors(actor_name='bond_2', a_color='black', b_color='red')
     assert render_rep.bonds['bond_2'].get('a_color') == 'black'
     assert render_rep.bonds['bond_2'].get('b_color') == 'red'
+    # The other bond colours shouldn't have changed 
+    assert render_rep.bonds['bond_1'].get('a_color') == 'midnightblue'
+    assert render_rep.bonds['bond_1'].get('b_color') == 'red'
 
     # Add hull rendering options 
     hull_options = dict(color='grey', show_edges=True, line_width=5, lighting=True, opacity=0.5)
@@ -151,3 +154,33 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     # options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     # pl_inter = solvis.visualization.AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)
     # pl_inter.add_single_atom_as_sphere([0,0,0], color=fe_color, radius=0.1, **options)
+
+def test_renderer_helper_populate(capped_trigonal_prism_solv_system):
+    ''' 
+    Test that the RendererRepresentation can be filled using a solvation system.
+    '''
+
+    # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
+    # There are no H atoms in this particular trajectory
+    fe_type = 3
+    o_type = 1
+    # Desired colors and radii for atoms
+    fe_color = "black"
+    fe_radius = 0.3 
+    o_color = "midnightblue"
+    o_radius = 0.2
+
+    render_rep = solvis.render_helper.RendererRepresentation()
+
+    # Set the atom and bond types 
+    # The center is of atom type 0
+    render_rep.add_atom_type_rendering(atom_type=0,color=fe_color, radius=fe_radius)
+    render_rep.add_atom_type_rendering(atom_type=o_type,color=o_color, radius=o_radius)
+    # Bond type for a bond type of 1 (start from 1)
+    bond_opt = dict(radius=0.1, resolution=1, bond_gradient_start=0.3) 
+    render_rep.add_bond_type_rendering(bond_type=1, color="dimgrey", **bond_opt) # color is optional 
+
+    # Fill the render_rep object
+    solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(render_rep, capped_trigonal_prism_solv_system, include_center=True)
+    # There should be 8 atoms in the renderer represenation
+    assert render_rep.num_atoms == len(capped_trigonal_prism_solv_system.atoms)+1

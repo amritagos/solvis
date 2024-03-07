@@ -68,6 +68,18 @@ class SolvationShell(System):
             # Only when types (numbers) are given in a list, will fail otherwise 
             surrounding_atoms = self.atoms[[atom.index for atom in self.atoms if atom.number in coordinating_type]]
 
+        # If the cutoff is larger than the distance of the furthest atom in the solvation shell
+        # you have a problem, print a warning and change the cutoff 
+        furthest_pos = surrounding_atoms.get_positions()[-1]
+        # The distance is already unwrapped with respect to the center
+        r_max = np.linalg.norm(furthest_pos-self.center)
+        try:
+            if r_max<cutoff:
+                raise ValueError("The cutoff is bigger than the distance of the furthest atom from the center in the solvation center.\n Setting cutoff to maximum distance equal to ", r_max)
+        except ValueError as error:
+            print(error)
+            cutoff = r_max*(1+1E-12)
+
         neigh_ind = nearest_neighbours_within_cutoff(surrounding_atoms.get_positions(), self.center, cutoff, self.box_lengths)
         # Return the coordination number 
         return len(neigh_ind)

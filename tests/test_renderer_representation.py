@@ -252,7 +252,7 @@ def test_renderer_helper_populate(capped_trigonal_prism_solv_system):
     }
 
 
-def test_renderer_hbond(capped_trigonal_prism_solv_system):
+def test_renderer_hbond():
     """
     Test hydrogen bonding options for the RendererRepresentation object
     """
@@ -272,4 +272,16 @@ def test_renderer_hbond(capped_trigonal_prism_solv_system):
         "segment_spacing": 0.175,
         "color": "orchid",
         "width": 10.0,
+    }
+
+    # Add a hydrogen bond between tags 0 and 1
+    # The width should be 11.0 here
+    render_rep.add_hydrogen_bond([0, 1], actor_name=None, width=11.0)
+    assert render_rep.hydrogen_bonds["hbond_1"] == {
+        "tags": [0, 1],
+        "render_options": {
+            "segment_spacing": 0.175,
+            "color": "orchid",
+            "width": 11.0,
+        },
     }

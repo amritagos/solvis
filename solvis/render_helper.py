@@ -98,10 +98,22 @@ class RendererRepresentation:
             name = "hull_" + str(self.num_hulls)
         self.hulls[name] = render_options
 
-    def add_hydrogen_bond(self, actor_name, atom_tags, bond_type):
-        hydrogen_bond_info = {"tags": atom_tags, "type": bond_type}
-        self.hydrogen_bonds[actor_name] = hydrogen_bond_info
+    def add_hydrogen_bond(self, bond_tags, actor_name=None, **render_options):
+        """
+        render_options can override any of the following (default options are:)
+        segment_spacing=0.175, color="grey", width=10.0
+        Hydrogen bonds will be rendered as dashed lines
+        """
+        options = merge_options(self.hbond_rendering, render_options)
+
         self.num_hbonds += 1
+        if actor_name is not None:
+            name = actor_name
+        else:
+            name = "hbond_" + str(self.num_hbonds)
+
+        hydrogen_bond_info = {"tags": bond_tags, "render_options": options}
+        self.hydrogen_bonds[name] = hydrogen_bond_info
 
     def get_render_info_from_atom_name(self, actor_name):
         return self.atoms.get(actor_name).get("render_options")
@@ -227,7 +239,6 @@ class RendererRepresentation:
         render_options can override any of the following (default options are:)
         radius=0.1, resolution=1, bond_gradient_start=0.0, asymmetric_gradient_start=None,**mesh_options_override_default
         colorby: "atomcolor" or "bondtype". If not any of these options, set to the default color.
-        TODO: test for bondtype also. Also function for updating colors of an existing bond
         """
         # We need a_color and b_color to render the bond
         if colorby == "atomcolor":

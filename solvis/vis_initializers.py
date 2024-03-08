@@ -36,6 +36,19 @@ def fill_render_rep_bonds_from_solv_shell_center(
         )
 
 
+def fill_render_rep_bonds_from_edges(render_rep, edges, bond_type, colorby):
+    """
+    Fill up a given RendererRepresentation object with bonds of a single bond type. The edges
+    should be a list of *atom tags* and not atom indices.
+    The bond type must have ALREADY been set.
+    colorby: "atomcolor" or "bondtype"
+    """
+    bond_render_opt = render_rep.bond_type_rendering[bond_type].get("render_options")
+
+    for bond in edges:
+        render_rep.add_bond(bond, bond_type, colorby=colorby, **bond_render_opt)
+
+
 def coord_from_tag(atom_tag, solv_shell):
     """
     Get the coordinate, given an atom tag (if center, then use SolvationShell center)

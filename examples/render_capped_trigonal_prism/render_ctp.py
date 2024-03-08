@@ -75,10 +75,16 @@ render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
 
 # Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)
 # Edges should be with tags here, not indices
+edges_tags = []
 for edge in edges:
     tag1 = solvation_shell.atoms.get_tags()[edge[0]]
     tag2 = solvation_shell.atoms.get_tags()[edge[1]]
-    render_rep.add_bond([tag1, tag2], bondtype, colorby="atomcolor")
+    edges_tags.append([tag1, tag2])
+
+# Add the edges as bonds (edges are wrt convex_hull here)
+solvis.vis_initializers.fill_render_rep_bonds_from_edges(
+    render_rep, edges_tags, bond_type=1, colorby="atomcolor"
+)
 
 # Add the hull
 mesh_cmap = solvis.util.create_two_color_gradient(

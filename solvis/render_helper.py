@@ -313,6 +313,9 @@ class RendererRepresentation:
         elif actor_name in self.hulls:
             del self.hulls[actor_name]
             return True
+        elif actor_name in self.hydrogen_bonds:
+            del self.hydrogen_bonds[actor_name]
+            return True
         else:
             return False
 

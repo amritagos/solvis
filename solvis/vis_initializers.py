@@ -49,6 +49,19 @@ def fill_render_rep_bonds_from_edges(render_rep, edges, bond_type, colorby):
         render_rep.add_bond(bond, bond_type, colorby=colorby, **bond_render_opt)
 
 
+def fill_render_rep_hbonds_from_edges(render_rep, edges, **render_options):
+    """
+    Fill up a given RendererRepresentation object with hydrogen bonds. The edges
+    should be a list of *atom tags* and not atom indices.
+    Attributes you can set for the hydrogen bond rendering (default values are):
+    segment_spacing=0.175, color="grey", width=10.0
+    """
+    hbond_render_opt = render_rep.hbond_rendering
+
+    for bond in edges:
+        render_rep.add_hydrogen_bond(bond, actor_name=None, **render_options)
+
+
 def coord_from_tag(atom_tag, solv_shell):
     """
     Get the coordinate, given an atom tag (if center, then use SolvationShell center)

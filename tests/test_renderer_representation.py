@@ -285,3 +285,16 @@ def test_renderer_hbond():
             "width": 11.0,
         },
     }
+
+    # Use the vis_initializers function to add hydrogen bonds to a
+    # RendererRepresentation object
+    edges = [[1, 2]]  # Atom tags for a bond
+    solvis.vis_initializers.fill_render_rep_hbonds_from_edges(render_rep, edges)
+    assert render_rep.hydrogen_bonds["hbond_1"] == {
+        "tags": [0, 1],
+        "render_options": {
+            "segment_spacing": 0.175,
+            "color": "orchid",
+            "width": 11.0,
+        },
+    }

@@ -238,27 +238,34 @@ class AtomicPlotter:
             **mesh_options,
         )
 
-    def add_single_line(self, start_point, end_point, color, width):
+    def add_single_line(self, start_point, end_point, color, width, actor_name=None):
         """
         Render a single straight line, given two end point (coordinate arrays)
+        I have not used this for hydrogen bonds, and this is not included in the
+        RendererRepresentation object
         """
+        if actor_name is None:
+            name_opt = dict()
+        else:
+            name_opt = dict(name=actor_name)
+
         line_mesh = pv.Line(start_point, end_point)
 
         # Add the tube created as a bond with a unique name given by actor_name
-        self.plotter.add_mesh(
-            line_mesh,
-            color=color,
-            line_width=width,
-        )
+        self.plotter.add_mesh(line_mesh, color=color, line_width=width, **name_opt)
 
     def create_dashed_line_custom_spacing(
-        self, point1, point2, segment_spacing, color, width=None
+        self, point1, point2, segment_spacing, color, width=None, actor_name=None
     ):
         """
         Create a dashed line (usually for hydrogen bonds) between two points
         """
         if width is None:
             width = 10
+        if actor_name is None:
+            name_opt = dict()
+        else:
+            name_opt = dict(name=actor_name)
         # Calculate the vector between the two points
         vector = np.array(point2) - np.array(point1)
 
@@ -281,11 +288,14 @@ class AtomicPlotter:
         ]
 
         # Create PyVista line segments with alternating empty spaces
-        lines = []
+        edges = []
         for i in range(0, num_segments - 1, 2):
-            start_point = dashed_line_points[i]
-            end_point = dashed_line_points[min(i + 1, num_segments - 1)]
-            self.add_single_line(start_point, end_point, color, width)
+            edges.append([2, i, min(i + 1, num_segments - 1)])
+        dashed_line_points = np.array(dashed_line_points)
+        lines = np.hstack(edges)
+        line_mesh = pv.PolyData(dashed_line_points, lines=lines)
+        # Add the lines
+        self.plotter.add_mesh(line_mesh, color=color, line_width=width, **name_opt)
 
     def create_bonds_from_edges(
         self,

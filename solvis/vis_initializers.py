@@ -112,6 +112,23 @@ def populate_plotter_from_solv_shell(
             **render_opt
         )
 
+    # Add the hydrogen bonds
+    # Loop through all hbonds
+    for actor_name in render_rep.hydrogen_bonds.keys():
+        bond_tags = render_rep.hydrogen_bonds[actor_name]["tags"]
+        coord_a = coord_from_tag(bond_tags[0], solv_shell)
+        coord_b = coord_from_tag(bond_tags[1], solv_shell)
+        render_opt = render_rep.hydrogen_bonds[actor_name]["render_options"]
+        # Add the hydrogen bond to the plotter
+        plotter.create_dashed_line_custom_spacing(
+            point1=coord_a,
+            point2=coord_b,
+            segment_spacing=render_opt["segment_spacing"],
+            color=render_opt["color"],
+            width=render_opt["width"],
+            actor_name=actor_name,
+        )
+
     if convex_hull_list is None and len(render_rep.hulls.keys()) > 0:
         print("Convex hull list not provided")
         return

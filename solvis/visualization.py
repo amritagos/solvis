@@ -266,6 +266,7 @@ class AtomicPlotter:
             name_opt = dict()
         else:
             name_opt = dict(name=actor_name)
+
         # Calculate the vector between the two points
         vector = np.array(point2) - np.array(point1)
 

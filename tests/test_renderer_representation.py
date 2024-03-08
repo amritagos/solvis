@@ -250,3 +250,26 @@ def test_renderer_helper_populate(capped_trigonal_prism_solv_system):
         "b_color": "red",
         "render_options": {"radius": 0.1, "resolution": 1, "bond_gradient_start": 0.3},
     }
+
+
+def test_renderer_hbond(capped_trigonal_prism_solv_system):
+    """
+    Test hydrogen bonding options for the RendererRepresentation object
+    """
+
+    render_rep = solvis.render_helper.RendererRepresentation()
+
+    # The default hbond render options should be:
+    assert render_rep.hbond_rendering == {
+        "segment_spacing": 0.175,
+        "color": "grey",
+        "width": 10.0,
+    }
+
+    # Change the color in the hbond render options
+    render_rep.set_hbond_rendering(color="orchid")
+    assert render_rep.hbond_rendering == {
+        "segment_spacing": 0.175,
+        "color": "orchid",
+        "width": 10.0,
+    }

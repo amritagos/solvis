@@ -1,4 +1,4 @@
-from .util import merge_options_keeping_override
+from .util import merge_options_keeping_override, merge_options
 
 
 class RendererRepresentation:
@@ -18,6 +18,8 @@ class RendererRepresentation:
         self.num_hulls = 0
         self.default_bond_color = "black"
         self.default_atom_color = "black"
+        # Hydrogen bond rendering
+        self.hbond_rendering = dict(segment_spacing=0.175, color="grey", width=10.0)
 
     def add_atom_type_rendering(self, atom_type, color=None, **render_options):
         """
@@ -42,6 +44,14 @@ class RendererRepresentation:
             del render_options["color"]
         bond_info = dict(color=color, render_options=render_options)
         self.bond_type_rendering[bond_type] = bond_info
+
+    def set_hbond_rendering(self, **render_options):
+        """
+        Set the segment_spacing, color or width of hydrogen bonds
+        Rendered as a dashed line
+        """
+        options = merge_options(self.hbond_rendering, render_options)
+        self.hbond_rendering = options
 
     def add_atom(
         self, atom_tag, atom_type, color=None, actor_name=None, **render_options

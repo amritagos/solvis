@@ -86,14 +86,17 @@ class SolvationShell(System):
         furthest_pos = surrounding_atoms.get_positions()[-1]
         # The distance is already unwrapped with respect to the center
         r_max = np.linalg.norm(furthest_pos - self.center)
-        if r_max < cutoff:
-            warnings.warn(
-                "The cutoff is bigger than the distance of the furthest atom from the center in the solvation center.\n Setting cutoff to maximum distance {}".format(
-                    r_max
-                ),
-                RuntimeWarning,
-            )
+        try:
+            if r_max < cutoff:
+                raise ValueError(
+                    "The cutoff is bigger than the distance of the furthest atom from the center in the solvation center.\n Setting cutoff to maximum distance {}".format(
+                        r_max
+                    )
+                )
+        except ValueError as error:
+            print(error)
             cutoff = r_max * (1 + 1e-12)
+            print("The cutoff has been set to ", cutoff)
 
         neigh_ind = nearest_neighbours_within_cutoff(
             surrounding_atoms.get_positions(), self.center, cutoff, self.box_lengths

@@ -127,6 +127,22 @@ class RendererRepresentation:
         """
         return self.atoms.get(actor_name).get("tag")
 
+    def get_atom_name_from_tag(self, target_atom_tag):
+        """
+        Function to find the 'color' based on the value of 'tag' in a nested dictionary.
+
+        Parameters:
+        - target_atom_tag: The value of 'tag' to search for.
+
+        Returns:
+        - The value associated with the 'color' option if found, otherwise None.
+        """
+        for key, value in self.atoms.items():
+            if isinstance(value, dict):
+                if "tag" in value and value["tag"] == target_atom_tag:
+                    return key
+        return None
+
     def get_atom_rendering_options(self, atom_type):
         return self.atom_type_rendering.get(atom_type).get("render_options")
 

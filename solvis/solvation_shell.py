@@ -26,6 +26,7 @@ class SolvationShell(System):
         # We created the following: self.atoms, self.bonds=[],
         # self.box_lengths from solvent_atoms
         # self.tag_manager and self.is_expanded_box
+        self.tag_manager.update_tag_index_mapping(self.atoms)
 
         # If the center is not set, then assign a fake center
         if center is None:
@@ -41,13 +42,20 @@ class SolvationShell(System):
         """
         return np.mean(self.atoms.get_positions(), axis=0)
 
-    def build_convex_hull_k_neighbours(self, num_neighbours):
+    def build_convex_hull_k_neighbours(self, num_neighbours, coordinating_type="all"):
         """
         Returns a convex hull, created from k nearest neighbours.
         This function does not check the atom type
         """
+        if coordinating_type == "all":
+            surrounding_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise
+            surrounding_atoms = self.atoms[
+                [atom.index for atom in self.atoms if atom.number in coordinating_type]
+            ]
         # k should not be greater than the number of solvent atoms, and should be greater than 0
-        natoms = len(self.atoms)
+        natoms = len(surrounding_atoms)
         try:
             k = num_neighbours
             if num_neighbours > natoms:
@@ -59,7 +67,7 @@ class SolvationShell(System):
             k = natoms
 
         # Find k-nearest neighbours and build the convex hull
-        pos = self.atoms.get_positions()
+        pos = surrounding_atoms.get_positions()
         k_nearest_pos = pos[:k]
         convex_hull = ConvexHull(k_nearest_pos)
 
@@ -161,6 +169,36 @@ class SolvationShell(System):
         # The distance is already unwrapped with respect to the center
         r = np.linalg.norm(k_pos - self.center)
         return r
+
+    def find_k_th_neighbour_from_center(self, k, coordinating_type="all"):
+        """
+        Returns the atom tag of the k-th neighbour from the center.
+        """
+        # Get the Atoms object with all the solvent positions
+        if coordinating_type == "all":
+            surrounding_atoms = self.atoms
+        else:
+            # Only when types (numbers) are given in a list, will fail otherwise
+            surrounding_atoms = self.atoms[
+                [atom.index for atom in self.atoms if atom.number in coordinating_type]
+            ]
+        # k should not be greater than the number of solvent atoms, and should be greater than 0
+        natoms = len(surrounding_atoms)
+        try:
+            if k > natoms or k < 1:
+                raise ValueError(
+                    "k cannot be less than 1 or greater than the number of solvent atoms.\n Setting to maximum value."
+                )
+        except ValueError as error:
+            print(error)
+            k = natoms
+
+        k_pos = surrounding_atoms.get_positions()
+        tags = surrounding_atoms.get_tags()
+
+        # Find the k nearest neighbours
+        dist, neigh_ind = k_nearest_neighbours(k_pos, self.center, k)
+        return tags[neigh_ind[-1]]
 
     def distances_of_k_neighbours_from_center(
         self, num_neighbours, coordinating_type="all"

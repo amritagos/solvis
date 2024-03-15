@@ -11,114 +11,6 @@ import math
 import solvis
 from solvis.visualization import AtomicPlotter
 
-
-def render_hydrogen_bonds(
-    plotter,
-    o_atom_index,
-    o_atoms_pos,
-    h_atoms_pos,
-    box_len,
-    dash_length=None,
-    color=None,
-    width=None,
-):
-
-    if color is None:
-        color = "black"
-
-    if width is None:
-        width = 10
-
-    # For a given O atom, find the neighbouring O atoms within 3.5 Angstrom
-    o_neigh = solvis.util.nearest_neighbours_within_cutoff(
-        o_atoms_pos, o_atoms_pos[o_atom_index], 3.0, box_dimensions=box_len
-    )
-
-    for o_ind in o_neigh:
-        # Find the distance
-        o_o_dist = solvis.util.minimum_image_distance(
-            o_atoms_pos[o_atom_index], o_atoms_pos[o_ind], box_len
-        )
-
-        if math.isclose(o_o_dist, 0.0, rel_tol=1e-4):
-            continue
-
-        # Find the two closest H atom neighbours of this O atom
-        h_dist, h_ind = solvis.util.k_nearest_neighbours(
-            h_atoms_pos, o_atoms_pos[o_ind], 2, box_len
-        )
-
-        for current_h in h_ind:
-
-            # Neglect if the OA distance is greater than 2.42
-            o_a_dist = solvis.util.minimum_image_distance(
-                h_atoms_pos[current_h], o_atoms_pos[o_atom_index], box_len
-            )
-            if o_a_dist > 2.42:
-                continue
-
-            # Get the angle
-            # HDA
-            angle = solvis.util.angle_between_points(
-                h_atoms_pos[current_h], o_atoms_pos[o_ind], o_atoms_pos[o_atom_index]
-            )
-
-            if angle > 90:
-                angle = 180 - angle
-
-            if angle < 30:
-                print(o_a_dist, angle)
-                print("\n")
-                # Plot the hydrogen bond between H and A
-                if dash_length is None:
-                    plotter.add_single_line(
-                        o_atoms_pos[o_atom_index], h_atoms_pos[current_h], color, width
-                    )
-                else:
-                    plotter.create_dashed_line_custom_spacing(
-                        o_atoms_pos[o_atom_index],
-                        h_atoms_pos[current_h],
-                        dash_length,
-                        color,
-                        width,
-                    )
-
-    return plotter
-
-
-def render_water_bonds(
-    plotter,
-    o_atoms_pos,
-    o_atom_colors,
-    h_atom_color,
-    h_atoms_pos,
-    box_len,
-    num_h_per_o=2,
-    bond_thickness=0.1,
-):
-
-    for index, pos in enumerate(o_atoms_pos):
-        dist, neigh_ind = solvis.util.k_nearest_neighbours(
-            h_atoms_pos, pos, num_h_per_o, box_len
-        )
-        bonded_h_atoms = h_atoms_pos[neigh_ind]
-        bond_name = "h_bond_" + str(index)
-        # plotter.create_bonds_to_point(bonded_h_atoms, pos, single_bond_colors=solvent_point_colours,
-        #     radius=bond_thickness, resolution=1)
-        plotter.create_bonds_to_point(
-            bonded_h_atoms,
-            pos,
-            point_colors=[h_atom_color, h_atom_color],
-            central_point_color=o_atom_colors[index],
-            name=bond_name,
-            bond_gradient_start=0.4,
-            radius=bond_thickness,
-            resolution=1,
-        )
-
-    return plotter
-
-
 # Input filename
 script_dir = Path(__file__).resolve().parent
 infilename = script_dir / "input/system-1.data"
@@ -128,22 +20,6 @@ h_type = 2
 o_type = 1
 imagename = script_dir / "temp.png"
 trimmed_img_name = script_dir / "oct.png"
-
-# Bond and atom appearance
-# Decide what kind of gradient shading you want for bonds
-set_gradient = 0.5  # Asymmetric bond gradient , not used here
-bond_radius = 0.15  # 0.15
-atom_radius = 0.3  # 0.2
-fe_center_radius = 0.4  # 0.3
-h_atom_radius = 0.2  # 0.1
-
-h_atom_color = "#d3d3d3"
-
-segment_spacing = 0.17545664400649102
-hbond_color = "orchid"
-hbond_width = 40
-
-nearest_neigh = 6
 
 interactive_session = False  # True
 # final_camera_position=None
@@ -161,194 +37,140 @@ final_camera_position = [
 currentframe = read(
     infilename, format="lammps-data"
 )  # Read in the last frame of the trajectory
-
-pos = currentframe.get_positions()
-
-# Get just the O atoms
-o_atoms = currentframe[[atom.index for atom in currentframe if atom.number == o_type]]
-o_atoms_pos = o_atoms.get_positions()
-
-# Get the H atoms
-h_atoms = currentframe[[atom.index for atom in currentframe if atom.number == h_type]]
-h_atoms_pos = h_atoms.get_positions()
-
-# Indices of the Fe atoms
-fe_ind = currentframe.symbols.search(chemical_symbols[fe_type])
-# Here we only have one Fe atom
-
-fe_pos_query_pnt = currentframe.get_positions()[fe_ind[0]]
-
 # Box size lengths
 box_len = currentframe.get_cell_lengths_and_angles()[:3]
-# 6 Nearest neighbours
-k = nearest_neigh + 1  # including the central atom
-dist, neigh_ind = solvis.util.k_nearest_neighbours(
-    o_atoms_pos, fe_pos_query_pnt, k, box_len
+
+# Make a System object
+full_system = solvis.system.System(currentframe, expand_box=True)
+
+# Find the Fe ion (there is only one in this system)
+# This will be our central atom
+fe_ind = full_system.atoms.symbols.search(chemical_symbols[fe_type])
+fe_pos_query_pnt = full_system.atoms.get_positions()[fe_ind[0]]
+
+# Find solvent atoms only (exclude the Fe atom, which is the center)
+solvent_atoms = full_system.atoms[
+    [atom.index for atom in full_system.atoms if atom.number in [o_type, h_type]]
+]
+
+# Create a solvation shell, with the Fe as the center
+solvation_shell = solvis.solvation_shell.create_solvation_shell_from_solvent(
+    solvent_atoms, box_len, center=fe_pos_query_pnt
 )
-solvent_pos = o_atoms_pos[neigh_ind]
 
-# Nearest positions excluding the central atom
-k_near_pos = solvent_pos[:6]  # closest six solvent molecules only!
-
-# Get the convex hull using the scipy wrapper for QHull
-hull = ConvexHull(k_near_pos)
-# Number of faces, which is also the number of cells in the subsequent polyhull
-num_faces = len(hull.simplices)
-
-area = hull.area
-vol = hull.volume
+# Create a ConvexHull object from the nearest O atom positions
+convex_hull = solvation_shell.build_convex_hull_k_neighbours(
+    num_neighbours=6, coordinating_type=[o_type]
+)
 
 # Calculate the sphericity from the volume and area
-sph_value = solvis.util.sphericity(vol, area)
+sph_value = solvis.util.sphericity(convex_hull.volume, convex_hull.area)
 print("The calculated sphericity with 6 neighbours is", sph_value, "\n")
-
-# Convert the convex hull into a pyvista PolyData object
-faces_pyvistaformat = np.column_stack(
-    (3 * np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)
-).flatten()
-polyhull = PolyData(k_near_pos, faces_pyvistaformat)
-
 # ------------------------------------------------------------
-
-hull_color = "#c7c7c7"
-solvent_point_colours = [
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "midnightblue",
-    "red",
-]
+# Bond and atom appearance
+o_color = "midnightblue"
+center_type = 0
 central_point_colour = "black"
-# H atom colors
-h_colors = []
-for index, pos in enumerate(h_atoms_pos):
-    h_colors.append(h_atom_color)
+seventh_neigh_color = "red"
+o_radius = 0.3
+fe_center_radius = 0.4
+h_atom_radius = 0.2
+h_atom_color = "#d3d3d3"
+water_bond_thickness = 0.1
+# H bond parameters
+h_segment = 0.17545664400649102
+hbond_color = "orchid"
+hbond_width = 40
+# Decide render options for bonds
+bond_opt_1 = dict(
+    radius=0.15, resolution=1
+)  # Fe-O bonds, single color according to bond typpe
+bond_opt_2 = dict(
+    bond_gradient_start=0.4, radius=water_bond_thickness, resolution=1
+)  # O-H bonds, gradient, according to atomcolor type
+# Render options for hydrogen bonds
+hbond_opt = dict(segment_spacing=h_segment, color=hbond_color, width=hbond_width)
 
-if interactive_session:
-    # For interactive plotting
-    pl_inter = AtomicPlotter(interactive_mode=True, depth_peeling=True, shadows=False)
-    # Add the hull as a mesh
-    pl_inter.add_hull(
-        polyhull,
-        color=hull_color,
-        show_edges=True,
-        line_width=5,
-        lighting=True,
-        opacity=0.5,
-    )
-    # Create the bonds corresponding to the edges and add them to the plotter
-    # pl_inter.create_bonds_to_point(solvent_pos, fe_pos_query_pnt, point_colors=solvent_point_colours, central_point_color=central_point_colour,
-    #     radius=bond_radius, resolution=1,asymmetric_gradient_start=set_gradient)
-    # If you want single color bonds
-    pl_inter.create_bonds_to_point(
-        solvent_pos,
-        fe_pos_query_pnt,
-        single_bond_colors=solvent_point_colours,
-        radius=bond_radius,
-        resolution=1,
-    )
-    pl_inter.add_atoms_as_spheres(
-        solvent_pos, solvent_point_colours, radius=atom_radius
-    )
-    # Add the hydrogens
-    pl_inter.add_atoms_as_spheres(h_atoms_pos, h_colors, name="h", radius=h_atom_radius)
-    # bonds inside each water molecule
-    pl_inter = render_water_bonds(
-        pl_inter,
-        solvent_pos,
-        solvent_point_colours,
-        h_atom_color,
-        h_atoms_pos,
-        box_len,
-        num_h_per_o=2,
-        bond_thickness=0.1,
-    )
-    # Add the Fe solvation center as a sphere with a different size
-    pl_inter.add_single_atom_as_sphere(
-        fe_pos_query_pnt,
-        central_point_colour,
-        radius=fe_center_radius,
-        actor_name="center",
-    )
-    # Hydrogen bonds with the 7th molecule
-    pl_inter = render_hydrogen_bonds(
-        pl_inter,
-        6,
-        solvent_pos,
-        h_atoms_pos,
-        box_len,
-        dash_length=segment_spacing,
-        color=hbond_color,
-    )
-    pl_inter.interactive_window(delete_actor=True)
+# Build the RendererRepresentation object
+render_rep = solvis.render_helper.RendererRepresentation()
+# Add the atom type and atom type specific rendering options
+render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=o_radius)
+render_rep.add_atom_type_rendering(
+    atom_type=h_type, color=h_atom_color, radius=h_atom_radius
+)
+render_rep.add_atom_type_rendering(
+    atom_type=center_type, color=central_point_colour, radius=fe_center_radius
+)
+# Add Fe-O bonds
+render_rep.add_bond_type_rendering(bond_type=1, color=o_color, **bond_opt_1)
+# Add O-H intra-water bonds
+render_rep.add_bond_type_rendering(bond_type=2, color=h_atom_color, **bond_opt_2)
+# Add the hydrogen bond rendering
+render_rep.set_hbond_rendering(**hbond_opt)
 
-# ---------------------------
-# Now render the image (offscreen=True)
+# Add the atoms from the solvation shell
+solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(
+    render_rep, solvation_shell, include_center=True
+)
+
+# Change the color of the seventh atom
+seventh_mol_tag = solvation_shell.find_k_th_neighbour_from_center(
+    k=7, coordinating_type=[o_type]
+)
+seventh_mol_index = solvation_shell.tag_manager.lookup_index_by_tag(seventh_mol_tag)
+seventh_mol_name = render_rep.get_atom_name_from_tag(target_atom_tag=seventh_mol_tag)
+render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
+
+# Add bonds from the center to the solvent atoms
+bond1_render_opt = render_rep.bond_type_rendering[1].get("render_options")
+for solv_atom in solvation_shell.atoms:
+    if solv_atom.number == o_type:
+        iatom_tag = solv_atom.tag
+        render_rep.add_bond(
+            ["center", iatom_tag], bond_type=1, colorby="bondtype", **bond1_render_opt
+        )
+
+# Change the color of the bond from the seventh atom
+# should be the last bond
+bond_name = list(render_rep.bonds.keys())[-1]
+render_rep.update_bond_colors(
+    bond_name, a_color=seventh_neigh_color, b_color=seventh_neigh_color
+)
+
+# Add the intra-water bonds
+oh_bonds = solvis.bond_helper.find_intra_water_bonds(
+    solvation_shell.atoms, o_type, h_type, box_len
+)
+solvis.vis_initializers.fill_render_rep_bonds_from_edges(
+    render_rep, edges=oh_bonds, bond_type=2, colorby="atomcolor"
+)
+
+# Add the hydrogen bonds
+# hbond_list1 = solvis.bond_helper.find_water_hydrogen_bonds(seventh_mol_index, solvation_shell.atoms, o_type, h_type, box_len)
+# hbond_list2 = [[solvation_shell.atoms[0].tag, seventh_mol_tag]]
+# hbond_list = [[seventh_mol_tag,17], [seventh_mol_tag,15]] # 17,15
+
+solvis.vis_initializers.fill_render_rep_hbonds_from_edges(render_rep, edges=hbond_list)
+# Add the hull
+hull_color = "#c7c7c7"
+hull_options = dict(
+    color=hull_color, show_edges=True, line_width=5, lighting=True, opacity=0.5
+)
+render_rep.add_hull(**hull_options)
+# ------------------------------------------------------------
 
 pl_render = AtomicPlotter(
     interactive_mode=False, window_size=[4000, 4000], depth_peeling=True, shadows=False
 )
-# Add the hull as a mesh
-pl_render.add_hull(
-    polyhull,
-    color=hull_color,
-    show_edges=True,
-    line_width=5,
-    lighting=True,
-    opacity=0.5,
+# Populate plotter using the RendererRepresentation object
+solvis.vis_initializers.populate_plotter_from_solv_shell(
+    pl_render, render_rep, solvation_shell, convex_hull_list=[convex_hull]
 )
-# Create the bonds corresponding to the edges and add them to the plotter
-pl_render.create_bonds_to_point(
-    solvent_pos,
-    fe_pos_query_pnt,
-    single_bond_colors=solvent_point_colours,
-    radius=bond_radius,
-    resolution=1,
-)
-# Add the solvent atoms as spheres
-pl_render.add_atoms_as_spheres(solvent_pos, solvent_point_colours, radius=atom_radius)
-# Add the Fe solvation center as a sphere with a different size
-pl_render.add_single_atom_as_sphere(
-    fe_pos_query_pnt, central_point_colour, radius=fe_center_radius, actor_name="center"
-)
-# Add the hydrogens
-pl_render.add_atoms_as_spheres(h_atoms_pos, h_colors, name="h", radius=h_atom_radius)
-# bonds inside each water molecule
-pl_render = render_water_bonds(
-    pl_render,
-    solvent_pos,
-    solvent_point_colours,
-    h_atom_color,
-    h_atoms_pos,
-    box_len,
-    num_h_per_o=2,
-    bond_thickness=0.1,
-)
-# Hydrogen bonds with the 7th molecule
-pl_render = render_hydrogen_bonds(
-    pl_render,
-    6,
-    solvent_pos,
-    h_atoms_pos,
-    box_len,
-    dash_length=segment_spacing,
-    color=hbond_color,
-    width=hbond_width,
-)
-# Get and set the camera position found from the last frame in the interactive mode
-if interactive_session:
-    cpos = pl_inter.interactive_camera_position[-1]
-else:
-    if final_camera_position is None:
-        cpos = pl_render.plotter.camera_position
-    else:
-        cpos = final_camera_position
-print("Camera position will be set to ", cpos)
-pl_render.plotter.camera.zoom(1.33)
+# Set the camera position to desired position
+print("Camera position will be set to ", final_camera_position)
 # Save image
-pl_render.render_image(imagename, cpos)
+pl_render.render_image(imagename, final_camera_position)
+
 # Trim the image
 trimmed_im = solvis.util.trim(imagename, 10)
 trimmed_im.save(trimmed_img_name)

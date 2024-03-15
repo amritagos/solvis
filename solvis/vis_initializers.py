@@ -132,8 +132,6 @@ def populate_plotter_from_solv_shell(
     if convex_hull_list is None and len(render_rep.hulls.keys()) > 0:
         print("Convex hull list not provided")
         return
-        # Convert the convex hull into a pyvista PolyData object
-        polyhull = convex_hull.pyvista_hull_from_convex_hull()
     # Add the hulls
     for i, actor_name in enumerate(render_rep.hulls.keys()):
         # Convert the convex hull into a pyvista PolyData object

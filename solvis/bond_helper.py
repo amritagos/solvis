@@ -32,27 +32,18 @@ def find_intra_water_bonds(atoms, o_type, h_type, box_len):
     return bonds
 
 
-def find_water_hydrogen_bonds(o_atom_index, atoms, o_type, h_type, box_len):
+def find_water_hydrogen_bonds(o_atom_tag, solvation_shell, o_type, h_type):
     bonds = []  # List of atom tags
 
-    all_tags = atoms.get_tags()
-    all_pos = atoms.get_positions()
-    o_query_pos = all_pos[o_atom_index]
-    o_query_tag = all_tags[o_atom_index]
+    all_tags = solvation_shell.atoms.get_tags()
+    all_pos = solvation_shell.atoms.get_positions()
 
-    # Find all O atom indices in ASE atoms object
-    o_ind = atoms.symbols.search(chemical_symbols[o_type])
-    o_tags = all_tags[o_ind]
-    o_pos = all_pos[o_ind]
-
-    # Find all H atom indices in ASE atoms object
-    h_ind = atoms.symbols.search(chemical_symbols[h_type])
-    h_tags = all_tags[h_ind]
-    h_pos = all_pos[h_ind]
+    o_query_index = solvation_shell.tag_manager.lookup_index_by_tag(seventh_mol_tag)
+    o_query_pos =  all_pos[o_query_index]
 
     # For a given O atom, find the neighbouring O atoms within 3.5 Angstrom
     o_neigh = nearest_neighbours_within_cutoff(
-        o_pos, o_query_pos, 3.0, box_dimensions=box_len
+        o_pos, o_query_pos, 3.0
     )
 
     for o_ind in o_neigh:

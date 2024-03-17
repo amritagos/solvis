@@ -47,3 +47,5 @@ To see more verbose output from `pytest`, including tests that pass, you can run
 <img src="resources/non_octahedral_shape.png" width="200" />
 
 <img src="resources/octahedral_shell.png" width="200" />
+
+<img src="resources/shell_with_hbonds.png" width="200" />

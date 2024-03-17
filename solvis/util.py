@@ -42,8 +42,12 @@ def sanitize_positions_into_periodic_box(atoms, box_lengths):
     return atoms
 
 
-def minimum_image_distance(pointa, pointb, box_dimensions):
+def minimum_image_distance(pointa, pointb, box_dimensions=None):
     delta = pointa - pointb
+
+    if box_dimensions is None:
+        return np.linalg.norm(delta)
+
     for i in range(len(delta)):
         delta[i] -= box_dimensions[i] * round(delta[i] / box_dimensions[i])
 

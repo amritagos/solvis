@@ -39,7 +39,7 @@ dev = [
     "flake8-docstrings==1.6.0",
 ]
 examples = [
-    "pandas==1.4.0"
+    "pandas"
 ]
 
 [tool.isort]

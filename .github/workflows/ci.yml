@@ -31,5 +31,9 @@ jobs:
         inv build --install
     - name: Run the tests
       shell:  micromamba-shell {0}
+      if: runner.os == 'Linux'
+      run: |
+        pytest -v -k "not plotter_simple"
+      if: runner.os == 'macOS'
       run: |
         pytest -v

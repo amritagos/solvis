@@ -39,14 +39,7 @@ jobs:
       run: |
         inv build --install
 
-    - if: runner.os == 'Linux'
-      name: Run the tests on Linux
+    - name: Run the tests 
       shell:  micromamba-shell {0}
       run: |
         pytest -v 
-        
-    - if: runner.os == 'macOS'
-      name: Run the tests on macOS
-      shell:  micromamba-shell {0}
-      run: |
-        pytest -v

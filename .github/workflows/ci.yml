@@ -12,6 +12,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         build-type: [Release]
+    env:
+      DISPLAY: ":99.0"
 
     steps:
     - uses: actions/checkout@v4
@@ -25,19 +27,19 @@ jobs:
         cache-environment: true
         post-cleanup: 'all'
 
+    - if: runner.os == 'Linux'
+      name: Setup xvfb (Linux)
+      run: |
+        sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 libxcb-shape0 libglib2.0-0 libgl1-mesa-dev
+        sudo apt-get install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+        sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
+
     - name: Install the package
       shell: micromamba-shell {0}
       run: |
         inv build --install
 
-    - if: runner.os == 'Linux'
-      name: Run the tests on Linux
+    - name: Run the tests 
       shell:  micromamba-shell {0}
       run: |
-        pytest -v -k "not plotter_simple"
-        
-    - if: runner.os == 'macOS'
-      name: Run the tests on macOS
-      shell:  micromamba-shell {0}
-      run: |
-        pytest -v
+        pytest -v 

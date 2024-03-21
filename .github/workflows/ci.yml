@@ -32,4 +32,4 @@ jobs:
     - name: Run the tests
       shell:  micromamba-shell {0}
       run: |
-        pytest
+        pytest -v

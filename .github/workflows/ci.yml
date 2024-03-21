@@ -29,11 +29,15 @@ jobs:
       shell: micromamba-shell {0}
       run: |
         inv build --install
-    - name: Run the tests
+
+    - if: runner.os == 'Linux'
+      name: Run the tests on Linux
       shell:  micromamba-shell {0}
-      if: runner.os == 'Linux'
       run: |
         pytest -v -k "not plotter_simple"
-      if: runner.os == 'macOS'
+        
+    - if: runner.os == 'macOS'
+      name: Run the tests on macOS
+      shell:  micromamba-shell {0}
       run: |
         pytest -v

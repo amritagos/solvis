@@ -26,7 +26,6 @@ class SolvationShell(System):
         # We created the following: self.atoms, self.bonds=[],
         # self.box_lengths from solvent_atoms
         # self.tag_manager and self.is_expanded_box
-        self.tag_manager.update_tag_index_mapping(self.atoms)
 
         # If the center is not set, then assign a fake center
         if center is None:

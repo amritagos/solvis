@@ -1,5 +1,6 @@
 from ase import Atoms
 
+
 class AtomTagManager:
     def __init__(self, atoms):
         self.tag_index_mapping = self._create_tag_index_mapping(atoms)
@@ -14,7 +15,9 @@ class AtomTagManager:
         """
         Update the dictionary mapping tags to indices and vice versa based on the order of Atom objects in the Atoms object.
         """
-        self.tag_index_mapping = {atom.tag: (index, atom.tag) for index, atom in enumerate(atoms)}
+        self.tag_index_mapping = {
+            atom.tag: (index, atom.tag) for index, atom in enumerate(atoms)
+        }
 
     def lookup_index_by_tag(self, tag):
         """

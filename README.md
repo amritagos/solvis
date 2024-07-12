@@ -1,6 +1,6 @@
 # solvis
 
-<img src="branding/logo/logo.png" width="300" />
+<img src="branding/logo/logo.png" width="1000" />
 
 ## About
 

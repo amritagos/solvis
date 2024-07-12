@@ -126,11 +126,20 @@ solvis.vis_initializers.populate_plotter_from_solv_shell(
     show_points=False,
     font_size=186,
 )
-# test label
-# poly = pv.PolyData([[26.6679+0.3, 23.3139, 22.8734]])
-# pl_render.plotter.add_mesh(poly)
-# points = solvation_shell.atoms.get_positions()[o_ind]
-# pl_render.plotter.add_point_labels([[26.6679, 23.3139, 22.8734]], ["blah"], always_visible=True, point_size=100, font_size=186)
+# Add a description of the image
+pl_render.plotter.add_text(
+    "D-A <= 3.1 Angstrom; angle HDA <=30",
+    position="upper_left",
+    font_size=186,
+    color="black",
+    font="arial",
+    shadow=False,
+    name=None,
+    viewport=False,
+    orientation=0.0,
+    font_file=None,
+    render=True,
+)
 # Set the camera position to desired position
 print("Camera position will be set to ", final_camera_position)
 # Save image

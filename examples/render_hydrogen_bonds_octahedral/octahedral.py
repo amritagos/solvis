@@ -146,11 +146,16 @@ solvis.vis_initializers.fill_render_rep_bonds_from_edges(
 )
 
 # Add the hydrogen bonds
-hbond_list = solvis.bond_helper.find_water_hydrogen_bonds(
-    seventh_mol_tag, solvation_shell, o_type, h_type
+hbond_list = solvis.bond_helper.find_hydrogen_bonds_to_donor_or_acceptor(
+    seventh_mol_tag,
+    solvation_shell,
+    [o_type],
+    [o_type],
+    [h_type],
+    donor_H_distance=1.0,
+    donor_acceptor_cutoff=3.1,
+    ignore_hydrogens=False,
 )
-# hbond_list2 = [[solvation_shell.atoms[0].tag, seventh_mol_tag]]
-# hbond_list = [[seventh_mol_tag,20], [seventh_mol_tag,22]] # 17,15
 solvis.vis_initializers.fill_render_rep_hbonds_from_edges(render_rep, edges=hbond_list)
 # Add the hull
 hull_color = "#c7c7c7"

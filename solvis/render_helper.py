@@ -54,7 +54,13 @@ class RendererRepresentation:
         self.hbond_rendering = options
 
     def add_atom(
-        self, atom_tag, atom_type, color=None, actor_name=None, **render_options
+        self,
+        atom_tag,
+        atom_type,
+        color=None,
+        actor_name=None,
+        label=None,
+        **render_options
     ):
         """
         render_options overrides the render options provided by atom type.
@@ -82,6 +88,7 @@ class RendererRepresentation:
             "tag": atom_tag,
             "type": atom_type,
             "color": color,
+            "label": label,
             "render_options": options,
         }
         self.atoms[name] = atom_info
@@ -180,6 +187,23 @@ class RendererRepresentation:
         """
         if actor_name in self.atoms:
             self.atoms[actor_name]["color"] = color
+            return True
+        else:
+            return False
+
+    def set_atom_label(self, actor_name, label):
+        """
+        Function to change or set the label of an atom, given the actor_name
+
+        Parameters:
+        - actor_name: The key in the atoms dict whose value needs to be replaced.
+        - label: The text of the label.
+
+        Returns:
+        - True if the replacement was successful, False if actor_name was not found.
+        """
+        if actor_name in self.atoms:
+            self.atoms[actor_name]["label"] = label
             return True
         else:
             return False

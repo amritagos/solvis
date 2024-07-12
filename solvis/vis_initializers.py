@@ -11,12 +11,14 @@ def fill_render_rep_atoms_from_solv_shell(render_rep, solv_shell, include_center
     if you want atom type colors etc included.
     """
     if include_center:
-        render_rep.add_atom(atom_tag="center", atom_type=0, actor_name="center")
+        render_rep.add_atom(
+            atom_tag="center", atom_type=0, actor_name="center", label=None
+        )
 
     for solv_atom in solv_shell.atoms:
         iatom_type = solv_atom.number
         iatom_tag = solv_atom.tag
-        render_rep.add_atom(atom_tag=iatom_tag, atom_type=iatom_type)
+        render_rep.add_atom(atom_tag=iatom_tag, atom_type=iatom_type, label=None)
 
 
 def fill_render_rep_bonds_from_solv_shell_center(
@@ -74,13 +76,17 @@ def coord_from_tag(atom_tag, solv_shell):
 
 
 def populate_plotter_from_solv_shell(
-    plotter, render_rep, solv_shell, convex_hull_list=None
+    plotter, render_rep, solv_shell, convex_hull_list=None, **point_label_options
 ):
     """
     AFTER initializing the AtomicPlotter object, fill it up with atoms, bonds and hulls from
     the render_rep, referencing elements inside the SolvationShell object
     Optionally, add a convex hull. The convex hulls should be a ConvexHull object
     """
+    # Stuff for labels
+    label_points = []
+    label_text = []
+
     # Add the atoms
     # Loop through all atoms
     for actor_name in render_rep.atoms.keys():
@@ -92,6 +98,10 @@ def populate_plotter_from_solv_shell(
         plotter.add_single_atom_as_sphere(
             point=atom_coord, color=atom_color, actor_name=actor_name, **render_opt
         )
+        # Add the label
+        if render_rep.atoms[actor_name]["label"] is not None:
+            label_points.append(atom_coord)
+            label_text.append(render_rep.atoms[actor_name]["label"])
 
     # Add the bonds
     # Loop through all bonds
@@ -139,3 +149,9 @@ def populate_plotter_from_solv_shell(
         render_opt = render_rep.hulls[actor_name]
         # Add the hull to the plotter
         plotter.add_hull(polyhull, **render_opt)
+
+    # Add the labels if there are any
+    if len(label_points) > 0:
+        plotter.plotter.add_point_labels(
+            label_points, label_text, **point_label_options
+        )

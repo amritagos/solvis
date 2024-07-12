@@ -84,7 +84,7 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
 
     # Now add the Fe atom as the center
     render_rep.add_atom(
-        "center", fe_type, color=None, actor_name="fe"
+        "center", fe_type, color=None, actor_name="fe", label=None
     )  # Handle atom_tag='center' for solvation center! TODO
     assert render_rep.num_atoms == 1
     # Loop through the solvation atoms and add them

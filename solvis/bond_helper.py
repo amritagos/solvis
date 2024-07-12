@@ -55,52 +55,21 @@ def find_all_hydrogen_bonds(
     or equal to 3.1 Angstroms, which corresponds to the first minimum in the O-O RDF
     of water, and 2) the angle HDA should be less than or equal to 30 degrees.
     """
-    donor_symbols = [chemical_symbols[x] for x in donor_types]
-    donor_all_ind = solvation_shell.atoms.symbols.search(donor_symbols)
-    donor_tags = solvation_shell.atoms.get_tags()[donor_all_ind]
+    bonds = []  # will hold all found hydrogen bonds
 
-    all_bonds = [
-        bond
-        for donor_tag in donor_tags
-        for bond in find_hydrogen_bonds_to_donor(
-            donor_tag,
-            solvation_shell,
-            acceptor_types,
-            h_types,
-            donor_H_distance,
-            donor_acceptor_cutoff,
-            ignore_hydrogens,
-        )
-    ]
-
-    return all_bonds
-
-
-def find_hydrogen_bonds_to_donor(
-    donor_tag,
-    solvation_shell,
-    acceptor_types,
-    h_types,
-    donor_H_distance=1.0,
-    donor_acceptor_cutoff=3.1,
-    ignore_hydrogens=False,
-):
-    """
-    Find hydrogen bonds emanating from a particular donor in a solvation shell. The donor type must have H atoms bonded to it, within a distance of donor_H_distance. The donor_tag is
-    also present in the solvation shell.
-    """
     # Get the chemical symbols corresponding the acceptor types and H types
+    donor_symbols = [chemical_symbols[x] for x in donor_types]
     acceptor_symbols = [chemical_symbols[x] for x in acceptor_types]
     h_symbols = [chemical_symbols[x] for x in h_types]
 
     all_tags = solvation_shell.atoms.get_tags()
     all_pos = solvation_shell.atoms.get_positions()
 
-    # Get the position of the donor
-    donor_query_index = solvation_shell.tag_manager.lookup_index_by_tag(donor_tag)
-    d_query_pos = all_pos[donor_query_index]  # donor position
+    # Tags, indices and positions
+    donor_all_ind = solvation_shell.atoms.symbols.search(donor_symbols)
+    donor_tags = solvation_shell.atoms.get_tags()[donor_all_ind]
+    donor_pos = all_pos[donor_all_ind]
 
-    # Find all acceptor and H atom indices in ASE atoms object
     acceptor_all_ind = solvation_shell.atoms.symbols.search(acceptor_symbols)
     acceptor_tags = all_tags[acceptor_all_ind]
     acceptor_pos = all_pos[acceptor_all_ind]
@@ -109,21 +78,16 @@ def find_hydrogen_bonds_to_donor(
     h_tags = all_tags[h_all_ind]
     h_pos = all_pos[h_all_ind]
 
-    # Find neighbouring acceptor atoms within donor_acceptor_cutoff
-    acceptor_neigh = nearest_neighbours_within_cutoff(
-        acceptor_pos, d_query_pos, donor_acceptor_cutoff
-    )
+    # Loop through all donor positions
+    for d_query_pos, donor_tag in zip(donor_pos, donor_tags):
+        # Find neighbouring acceptor atoms within donor_acceptor_cutoff
+        acceptor_neigh = nearest_neighbours_within_cutoff(
+            acceptor_pos, d_query_pos, donor_acceptor_cutoff
+        )
 
-    bonds = []
-
-    for a_ind in acceptor_neigh:
-        if donor_tag == acceptor_tags[a_ind]:
-            continue
-
-        d_a_dist = minimum_image_distance(d_query_pos, acceptor_pos[a_ind])
-
-        if d_a_dist > donor_acceptor_cutoff:
-            continue
+        for a_ind in acceptor_neigh:
+            if donor_tag == acceptor_tags[a_ind]:
+                continue
 
         # Find the closest H atoms to the donor atom within the D-H distance cutoff
         h_ind = nearest_neighbours_within_cutoff(h_pos, d_query_pos, donor_H_distance)
@@ -132,6 +96,9 @@ def find_hydrogen_bonds_to_donor(
             angle = angle_between_points(
                 h_pos[current_h], d_query_pos, acceptor_pos[a_ind]
             )
+
+            if angle > 90:
+                angle = 180 - angle
 
             if angle <= 30:
                 bond = (

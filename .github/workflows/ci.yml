@@ -37,7 +37,7 @@ jobs:
     - name: Install the package
       shell: micromamba-shell {0}
       run: |
-        inv build --install
+        pip install -e .
 
     - name: Run the tests 
       shell:  micromamba-shell {0}

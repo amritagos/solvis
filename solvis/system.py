@@ -1,14 +1,16 @@
+from typing import Union
 from ase import Atoms
 from .atom_tag_manager import AtomTagManager
-from scipy.spatial import KDTree
 import numpy as np
 import math
+import numpy.typing as npt
+import warnings
 
 from .util import minimum_image_shift, k_nearest_neighbours
 
 
 class System:
-    def __init__(self, atoms: Atoms, expand_box=True):
+    def __init__(self, atoms: Atoms, expand_box: bool = True):
         self.atoms = atoms
         self.bonds = []  # These should be with respect to tags
         # Box lengths in all three dimensions
@@ -30,7 +32,7 @@ class System:
         else:
             self.is_expanded_box = False
 
-    def _generate_unique_tags(self):
+    def _generate_unique_tags(self) -> None:
         """
         Generate unique tags for each Atom in self.atoms if not already provided.
         Tags are numbered from 1 (not 0) in increasing order, similar in spirit to,
@@ -40,7 +42,7 @@ class System:
         if len(set(self.atoms.get_tags())) != len(self.atoms):
             self.atoms.set_tags([index + 1 for index, _ in enumerate(self.atoms)])
 
-    def _shift_all_positions_into_box(self):
+    def _shift_all_positions_into_box(self) -> None:
         """
         Shift all the positions by the minimum coordinate in x, y, z
         but only if the coordinates lie outside the box (0,0,0)(xboxlength, yboxlength,zboxlength).
@@ -52,7 +54,7 @@ class System:
         # Do nothing if pbcs have not been set
         if False in self.atoms.pbc:
             if self.__class__.__name__ == System:
-                print("Warning: PBCs are set to false, for ", self.__class__.__name__)
+                warnings.warn(f"PBCs are set to false, for {self.__class__.__name__}")
             return
 
         x_min, y_min, z_min = np.min(self.atoms.get_positions(), axis=0)
@@ -77,12 +79,20 @@ class System:
 
         self.atoms.set_positions(pos)
 
-    def add_expanded_box_atoms(self, query_pnt, neigh_atoms: Atoms):
-        """
-        Given a query point and neighbouring atoms (in an Atoms object),
+    def add_expanded_box_atoms(
+        self, query_pnt: npt.ArrayLike, neigh_atoms: Atoms
+    ) -> Atoms:
+        """Given a query point and neighbouring atoms (in an Atoms object),
         add any Atom object and add to the expanded box if the unwrapped distance
         is greater than half the box length.
         This is needed more for visualization
+
+        Args:
+            query_pnt (npt.ArrayLike): Query point coordinates
+            neigh_atoms (Atoms): ASE Atoms object for the neighbouring atoms
+
+        Returns:
+            Atoms: Expanded ASE atoms object
         """
 
         if not self.is_expanded_box:
@@ -123,21 +133,24 @@ class System:
 
     def create_solvation_shell_from_center(
         self,
-        central_pnt,
-        num_neighbours,
-        contains_solvation_center=False,
-        solvent_atom_types="all",
+        central_pnt: Union[int, npt.ArrayLike],
+        num_neighbours: int,
+        contains_solvation_center: bool = False,
+        solvent_atom_types: Union[str, list[int]] = "all",
     ):
-        """
-        Creates a SolvationShell as a subsystem from System, given a central point.
+        """Creates a SolvationShell as a subsystem from System, given a central point.
 
-        central_pnt: (int or numpy.ndarray) If int, this is the index of the Atom in atoms. If
+        Args:
+            central_pnt (Union[int, npt.ArrayLike]): If int, this is the index of the Atom in atoms. If
         np.ndarray, it is the coordinates of the central point
-        num_neighbours: Number of neighbours to return in the solvation shell
-        contains_solvation_center: (Optional, False) If this is set to True, then it is assumed that
+            num_neighbours (int): Number of neighbours to return in the solvation shell
+            contains_solvation_center (bool, optional): If this is set to True, then it is assumed that
         the center is part of solvent_atoms. An additional check is performed to remove the first neighbour
-        if the distance is within 1e-4 of 0.0.
-        solvent_atom_types: ('all' or list of solvent atom types) Neighbours will be searched in this subset of atoms
+        if the distance is within 1e-4 of 0.0. Defaults to False.
+            solvent_atom_types (Union[str, list[int]], optional): Neighbours will be searched in this subset of atoms. Defaults to "all".
+
+        Returns:
+            SolvationShell
         """
         from .solvation_shell import SolvationShell
 

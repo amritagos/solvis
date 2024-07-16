@@ -1,15 +1,14 @@
 from ase import Atoms
 from .system import System
 import numpy as np
-import math
-import warnings
+import numpy.typing as npt
+from typing import Optional, Union
 
 from .util import (
     minimum_image_shift,
     k_nearest_neighbours,
     nearest_neighbours_within_cutoff,
 )
-from .atom_tag_manager import AtomTagManager
 from .geometric_utils import ConvexHull
 
 
@@ -34,17 +33,35 @@ class SolvationShell(System):
         else:
             self.center = center
 
-    def _create_fake_center(self):
-        """
-        If a center is not provided, then a 'fake' center, using the atoms, is calculated.
+    def _create_fake_center(self) -> npt.ArrayLike:
+        """If a center is not provided, then a 'fake' center, using the atoms, is calculated.
         This function assumes that the positions are unwrapped.
+
+        Returns:
+            npt.ArrayLike: The "fake" center of the solvation shell
         """
         return np.mean(self.atoms.get_positions(), axis=0)
 
-    def build_convex_hull_k_neighbours(self, num_neighbours, coordinating_type="all"):
-        """
+    """
         Returns a convex hull, created from k nearest neighbours.
         This function does not check the atom type
+        """
+
+    def build_convex_hull_k_neighbours(
+        self, num_neighbours: int, coordinating_type: Union[str, list[int]] = "all"
+    ) -> ConvexHull:
+        """Creates a convex hull from the k nearest neighbours.
+
+        Args:
+            num_neighbours (int): The number of nearest neighbours (i.e. k)
+            coordinating_type (Union[str, list[int]], optional): Decides whether the nearest neighbours are chosen
+            from all solvent atoms, or just solvent atoms of a particular type. Defaults to "all".
+
+        Raises:
+            ValueError: k cannot be greater than the number of solvent atoms
+
+        Returns:
+            ConvexHull
         """
         if coordinating_type == "all":
             surrounding_atoms = self.atoms
@@ -73,11 +90,21 @@ class SolvationShell(System):
         return convex_hull
 
     def calculate_coordination_number_from_center(
-        self, cutoff, coordinating_type="all"
-    ):
-        """
-        Calculates the coordination number from the center. The coordinating_type should either
-        be the default, 'all', or a list of numbers corresponding to the type or atomic number.
+        self, cutoff: float, coordinating_type: Union[str, list[int]] = "all"
+    ) -> ConvexHull:
+        """Calculates the coordination number from the center within a cutoff. The coordinating_type should either
+        be the default, 'all', or a list of numbers corresponding to the type or atomic number
+
+        Args:
+            cutoff (float): Cutoff distance for the neighbours
+            coordinating_type (Union[str, list[int]], optional): Decides whether the nearest neighbours are chosen
+            from all solvent atoms, or just solvent atoms of a particular type. Defaults to "all".
+
+        Raises:
+            ValueError: The cutoff is bigger than the distance of the furthest atom from the center in the solvation center
+
+        Returns:
+            ConvexHull
         """
         # Get the Atoms object with all the solvent positions
         if coordinating_type == "all":
@@ -111,9 +138,21 @@ class SolvationShell(System):
         # Return the coordination number
         return len(neigh_ind)
 
-    def ravg_of_k_neighbours_from_center(self, num_neighbours, coordinating_type="all"):
-        """
-        Gets the average distance of k neighbours from the center.
+    def ravg_of_k_neighbours_from_center(
+        self, num_neighbours: int, coordinating_type: Union[str, list[int]] = "all"
+    ) -> float:
+        """Gets the average distance of k neighbours from the center.
+
+        Args:
+            num_neighbours (int): Number of nearest neighbours (or k)
+            coordinating_type (Union[str, list[int]], optional): Decides whether the nearest neighbours are chosen
+            from all solvent atoms, or just solvent atoms of a particular type. Defaults to "all".
+
+        Raises:
+            ValueError: k cannot be greater than the number of solvent atoms.
+
+        Returns:
+            float: Average distance of k neighbours
         """
         # k should not be greater than the number of solvent atoms, and should be greater than 0
         # Get the Atoms object with all the solvent positions
@@ -141,10 +180,23 @@ class SolvationShell(System):
         # Return the average of these distances
         return np.mean(dist)
 
-    def r_of_k_th_neighbour_from_center(self, k, coordinating_type="all"):
+    def r_of_k_th_neighbour_from_center(
+        self, k: int, coordinating_type: Union[str, list[int]] = "all"
+    ) -> float:
+        """Gets radial distance of k-th neighbour from the center.
+
+        Args:
+            k (int): the k-th neighbour
+            coordinating_type (Union[str, list[int]], optional): Decides whether the nearest neighbours are chosen
+            from all solvent atoms, or just solvent atoms of a particular type. Defaults to "all".
+
+        Raises:
+            ValueError: k cannot be less than 1 or greater than the number of solvent atoms.
+
+        Returns:
+            float: radial distance of the k-th neighbour
         """
-        Gets radial distance of k-th neighbour from the center.
-        """
+
         # Get the Atoms object with all the solvent positions
         if coordinating_type == "all":
             surrounding_atoms = self.atoms
@@ -200,10 +252,20 @@ class SolvationShell(System):
         return tags[neigh_ind[-1]]
 
     def distances_of_k_neighbours_from_center(
-        self, num_neighbours, coordinating_type="all"
-    ):
-        """
-        Gets a numPy array of distances of k neighbours from the center.
+        self, num_neighbours: int, coordinating_type: Union[str, list[int]] = "all"
+    ) -> npt.ArrayLike:
+        """Gets a numPy array of distances of k neighbours from the center.
+
+        Args:
+            num_neighbours (int): Number of neighbours or k
+            coordinating_type (Union[str, list[int]], optional): Decides whether the nearest neighbours are chosen
+            from all solvent atoms, or just solvent atoms of a particular type. Defaults to "all".
+
+        Raises:
+            ValueError: k cannot be greater than the number of solvent atoms.
+
+        Returns:
+            npt.ArrayLike: distances of k neighbours
         """
         # k should not be greater than the number of solvent atoms, and should be greater than 0
         # Get the Atoms object with all the solvent positions
@@ -231,17 +293,24 @@ class SolvationShell(System):
         return dist
 
 
-def create_solvation_shell_from_solvent(solvent_atoms: Atoms, box_lengths, center=None):
-    """
-    Create a SolvationShell with unwrapped coordinates,
+def create_solvation_shell_from_solvent(
+    solvent_atoms: Atoms,
+    box_lengths: npt.ArrayLike,
+    center: Optional[npt.ArrayLike] = None,
+) -> SolvationShell:
+    """Create a SolvationShell with unwrapped coordinates,
     which is not formed from a System, but directly from an ASE Atoms
     object with the desired solvent atoms. These will be arranged in order of distance
     from the center
 
-    solvent_atoms: ASE object with just the solvent atoms
-    box_lengths: Box lengths, needed to get unwrapped coordinates
-    center: Coordinates of the center; if not provided then the first coordinate
-    in solvent_atoms is chosen as the anchor point in creating unwrapped coordinates
+    Args:
+        solvent_atoms (Atoms): ASE object with just the solvent atoms
+        box_lengths (npt.ArrayLike): Box lengths, needed to get unwrapped coordinates
+        center (Optional[npt.ArrayLike], optional): Coordinates of the center; if not provided (None) then the first coordinate
+    in solvent_atoms is chosen as the anchor point in creating unwrapped coordinates. Defaults to None.
+
+    Returns:
+        SolvationShell
     """
 
     # Shift all the positions by the minimum coordinate in x, y, z

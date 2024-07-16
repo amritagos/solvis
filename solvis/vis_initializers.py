@@ -1,3 +1,4 @@
+from solvis.util import merge_options_keeping_override
 from .solvation_shell import SolvationShell
 from .render_helper import RendererRepresentation
 from .visualization import AtomicPlotter
@@ -29,7 +30,7 @@ def fill_render_rep_bonds_from_solv_shell_center(
     The bond type must have ALREADY been set.
     colorby: "atomcolor" or "bondtype"
     """
-    bond_render_opt = render_rep.bond_type_rendering[bond_type].get("render_options")
+    bond_render_opt = render_rep.bond_type_rendering[bond_type].render_options
 
     for solv_atom in solv_shell.atoms:
         iatom_tag = solv_atom.tag
@@ -45,7 +46,7 @@ def fill_render_rep_bonds_from_edges(render_rep, edges, bond_type, colorby):
     The bond type must have ALREADY been set.
     colorby: "atomcolor" or "bondtype"
     """
-    bond_render_opt = render_rep.bond_type_rendering[bond_type].get("render_options")
+    bond_render_opt = render_rep.bond_type_rendering[bond_type].render_options
 
     for bond in edges:
         render_rep.add_bond(bond, bond_type, colorby=colorby, **bond_render_opt)
@@ -59,9 +60,10 @@ def fill_render_rep_hbonds_from_edges(render_rep, edges, **render_options):
     segment_spacing=0.175, color="grey", width=10.0
     """
     hbond_render_opt = render_rep.hbond_rendering
+    options = merge_options_keeping_override(hbond_render_opt, render_options)
 
     for bond in edges:
-        render_rep.add_hydrogen_bond(bond, actor_name=None, **render_options)
+        render_rep.add_hydrogen_bond(bond, actor_name=None, **options)
 
 
 def coord_from_tag(atom_tag, solv_shell):
@@ -89,19 +91,17 @@ def populate_plotter_from_solv_shell(
 
     # Add the atoms
     # Loop through all atoms
-    for actor_name in render_rep.atoms.keys():
-        atom_tag = render_rep.atoms[actor_name]["tag"]
-        atom_coord = coord_from_tag(atom_tag, solv_shell)
-        render_opt = render_rep.atoms[actor_name]["render_options"]
-        atom_color = render_rep.atoms[actor_name]["color"]
+    for atom in render_rep.atoms.atoms:
+        atom_coord = coord_from_tag(atom.tag, solv_shell)
+        render_opt = atom.render_options
         # Add the atom to the plotter
         plotter.add_single_atom_as_sphere(
-            point=atom_coord, color=atom_color, actor_name=actor_name, **render_opt
+            point=atom_coord, color=atom.color, actor_name=atom.name, **render_opt
         )
         # Add the label
-        if render_rep.atoms[actor_name]["label"] is not None:
+        if atom.label is not None:
             label_points.append(atom_coord)
-            label_text.append(render_rep.atoms[actor_name]["label"])
+            label_text.append(atom.label)
 
     # Add the bonds
     # Loop through all bonds

@@ -149,6 +149,10 @@ class AllAtomInfo:
 
 
 class RendererRepresentation:
+    """Class for handling all the rendering information for each atom (rendered as a sphere),
+    bond (rendered as a cylinder), hull (convex shape) and hydrogen bond (dotted line).
+    """
+
     def __init__(self):
         self.atoms = AllAtomInfo()
         self.bonds = {}
@@ -251,9 +255,12 @@ class RendererRepresentation:
             **options
         )
 
-    def add_hull(self, actor_name=None, **render_options):
-        """
-        for options to: add_hull(self,hull:PolyData, **color_or_additional_mesh_options)
+    def add_hull(self, actor_name: Optional[str] = None, **render_options) -> None:
+        """for options to: add_hull(self,hull:PolyData, **color_or_additional_mesh_options)
+
+        Args:
+            actor_name (Optional[str], optional): The name of the PyVista actor. If you don't provide one, a name is
+            generated using the number of hulls added. Defaults to None.
         """
         self.num_hulls += 1
         if actor_name is not None:
@@ -262,11 +269,21 @@ class RendererRepresentation:
             name = "hull_" + str(self.num_hulls)
         self.hulls[name] = render_options
 
-    def add_hydrogen_bond(self, bond_tags, actor_name=None, **render_options):
+    """
+        
         """
-        render_options can override any of the following (default options are:)
+
+    def add_hydrogen_bond(
+        self, bond_tags: list[int], actor_name: Optional[str] = None, **render_options
+    ) -> None:
+        """Adds a hydrogen bond. The kwargs render_options can override any of the following (default options are:)
         segment_spacing=0.175, color="grey", width=10.0
         Hydrogen bonds will be rendered as dashed lines
+
+        Args:
+            bond_tags (list[int]): Tags corresponding to the two atoms in the bond.
+            actor_name (Optional[str], optional): The name of the PyVista actor. If you don't provide one, a name is
+            generated using the number of hydrogen bonds added. Defaults to None.
         """
         options = merge_options(self.hbond_rendering, render_options)
 
@@ -279,23 +296,44 @@ class RendererRepresentation:
         hydrogen_bond_info = {"tags": bond_tags, "render_options": options}
         self.hydrogen_bonds[name] = hydrogen_bond_info
 
-    def get_render_info_from_atom_name(self, actor_name):
+    def get_render_info_from_atom_name(self, actor_name: str) -> Optional[dict]:
+        """Obtain the rendering information, given the actor name of an atom
+
+        Args:
+            actor_name (str): Actor name
+
+        Returns:
+            Optional[dict[str]]: Dictionary containing rendering options, or None if the actor_name cannot be found.
+        """
         atom_info = self.atoms.find_atom_with_name(actor_name=actor_name)
         if atom_info is None:
             return None
         else:
             return atom_info.render_options
 
-    def get_color_from_atom_name(self, actor_name):
+    def get_color_from_atom_name(self, actor_name: str) -> Optional[str]:
+        """Obtain the color of a particular atom, given its actor name
+
+        Args:
+            actor_name (str): Actor name of the atom
+
+        Returns:
+            Optional[str]: Color of the atom, or None if actor_name cannot be found.
+        """
         atom_info = self.atoms.find_atom_with_name(actor_name=actor_name)
         if atom_info is None:
             return None
         else:
             return atom_info.color
 
-    def get_tag_from_atom_name(self, actor_name):
-        """
-        Get the atom tag, given the atom actor name in self.atoms
+    def get_tag_from_atom_name(self, actor_name: str) -> Optional[int]:
+        """Get the atom tag of an atom, given its actor name
+
+        Args:
+            actor_name (str): Actor name of the atom
+
+        Returns:
+            Optional[int]: Atom tag or None of actor_name cannot be found
         """
         atom_info = self.atoms.find_atom_with_name(actor_name=actor_name)
         if atom_info is None:
@@ -318,7 +356,15 @@ class RendererRepresentation:
         else:
             return None
 
-    def get_atom_rendering_options(self, atom_type):
+    def get_atom_rendering_options(self, atom_type: int) -> Optional[dict]:
+        """Get the rendering options given the atom type
+
+        Args:
+            atom_type (int): Atom type of a particular atom
+
+        Returns:
+            Optional[dict]:  Dictionary containing rendering options, or None if the actor_name cannot be found.
+        """
         return self.atom_type_rendering.get(atom_type).render_options
 
     def update_atom_render_opt(self, actor_name: str, **render_options) -> bool:
@@ -429,17 +475,15 @@ class RendererRepresentation:
         else:
             return False
 
-    """
-        Function to find the 'color' based on the value of 'tag' in a nested dictionary.
+    def find_color_by_atom_tag(self, target_atom_tag: int) -> Optional[str]:
+        """Function to find the 'color' of an atom, based on the value of the 'tag' of the atom
 
-        Parameters:
-        - target_atom_tag: The value of 'tag' to search for.
+        Args:
+            target_atom_tag (int): The atom tag of the atom
 
         Returns:
-        - The value associated with the 'color' option if found, otherwise None.
+            Optional[str]: The value associated with color of the atom, otherwise None.
         """
-
-    def find_color_by_atom_tag(self, target_atom_tag: int) -> Optional[str]:
         atom_info = self.atoms.find_atom_with_tag(target_atom_tag)
         if atom_info is not None:
             return atom_info.color
@@ -448,16 +492,22 @@ class RendererRepresentation:
 
     def add_bond(
         self,
-        bond_tags,
-        bond_type,
-        colorby="atomcolor",
-        actor_name=None,
+        bond_tags: list[int],
+        bond_type: int,
+        colorby: str = "atomcolor",
+        actor_name: Optional[str] = None,
         **render_options
     ):
-        """
-        render_options can override any of the following (default options are:)
+        """Add a bond to the RendererRepresentation object. The kwargs render_options can override any of the following (default options are:)
         radius=0.1, resolution=1, bond_gradient_start=0.0, asymmetric_gradient_start=None,**mesh_options_override_default
         colorby: "atomcolor" or "bondtype". If not any of these options, set to the default color.
+
+        Args:
+            bond_tags (list[int]): Tags of the two atoms in the bond
+            bond_type (int): Integral bond type of the bond
+            colorby (str, optional): Decides how the bond will be coloured. Defaults to "atomcolor".
+            actor_name (Optional[str], optional): Name of the bond actor. If not provided, then a unique actor name
+            is created based on the number of bonds already added. Defaults to None.
         """
         # We need a_color and b_color to render the bond
         if colorby == "atomcolor":
@@ -501,16 +551,17 @@ class RendererRepresentation:
         }
         self.bonds[name] = bond_info
 
-    def update_bond_colors(self, actor_name, a_color, b_color):
-        """
-        Function to change the bond colors of a given bond actor
+    def update_bond_colors(self, actor_name: str, a_color: str, b_color: str) -> bool:
+        """Function to change the bond colors of a given bond actor
 
-        Parameters:
-        - actor_name: The key in the atoms dict whose value needs to be replaced.
-        - render_options: The new render options.
+        Args:
+            actor_name (str): The actor name of the bond, whose colours need to be changed.
+            a_color (str): End point ("A") color of the bond.
+            b_color (str): End point ("B) color of the bond. a_color and b_color can be the same.
+            render_options: The new render options
 
         Returns:
-        - True if the replacement was successful, False if actor_name was not found.
+            bool: True if successfully changed.
         """
         if actor_name in self.bonds:
             self.bonds[actor_name]["a_color"] = a_color
@@ -519,9 +570,14 @@ class RendererRepresentation:
         else:
             return False
 
-    def delete_actor(self, actor_name):
-        """
-        Delete an actor from atoms, bonds or hulls
+    def delete_actor(self, actor_name: str) -> bool:
+        """Delete an actor from atoms, bonds or hulls
+
+        Args:
+            actor_name (str): Name of the actor
+
+        Returns:
+            bool: True if successfully deleted, otherwise False
         """
         # Search for the atom in self.atoms
         atom_index = self.atoms.find_first_atom_index_with_name(actor_name=actor_name)

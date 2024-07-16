@@ -1,5 +1,6 @@
 from typing import Any, Optional
 from .util import merge_options_keeping_override, merge_options
+import warnings
 
 
 class RenderingUnitTypeInfo:
@@ -26,7 +27,7 @@ class SingleAtomInfo:
         atom_type: int,
         color: str,
         label: Optional[str] = None,
-        **render_options
+        **render_options,
     ):
         """
         Rendering information for a single atom.
@@ -108,7 +109,7 @@ class AllAtomInfo:
         color: str,
         actor_name: Optional[str] = None,
         label: Optional[str] = None,
-        **render_options
+        **render_options,
     ) -> None:
         """Add a new atom
 
@@ -134,13 +135,12 @@ class AllAtomInfo:
             atom_type=atom_type,
             color=color,
             label=label,
-            **render_options
+            **render_options,
         )
         if existing_index is not None:
             # overwrite it
-            print(
-                "Warning: Overwriting atom information values for an actor with name ",
-                name,
+            warnings.warn(
+                f"Overwriting atom information values for an actor with name {name}"
             )
             self.atoms[existing_index] = new_atom_info
         else:
@@ -220,7 +220,7 @@ class RendererRepresentation:
         color: Optional[str] = None,
         actor_name: Optional[str] = None,
         label: Optional[str] = None,
-        **render_options
+        **render_options,
     ):
         """
         Adds an atom to the RendererRepresentation object. All options you enter will override properties set by the atom type.
@@ -241,10 +241,10 @@ class RendererRepresentation:
             if color is None:
                 color = self.atom_type_rendering[atom_type].color
         else:
-            print("Warning: No atom type render options set for atom type", atom_type)
+            warnings.warn(f"No atom type render options set for atom type {atom_type}")
             options = render_options
             if color is None:
-                print("Warning: Setting atom color to default.")
+                warnings.warn("Setting atom color to default.")
                 color = self.default_atom_color
         self.atoms.add_atom(
             tag=atom_tag,
@@ -252,7 +252,7 @@ class RendererRepresentation:
             color=color,
             actor_name=actor_name,
             label=label,
-            **options
+            **options,
         )
 
     def add_hull(self, actor_name: Optional[str] = None, **render_options) -> None:
@@ -496,7 +496,7 @@ class RendererRepresentation:
         bond_type: int,
         colorby: str = "atomcolor",
         actor_name: Optional[str] = None,
-        **render_options
+        **render_options,
     ):
         """Add a bond to the RendererRepresentation object. The kwargs render_options can override any of the following (default options are:)
         radius=0.1, resolution=1, bond_gradient_start=0.0, asymmetric_gradient_start=None,**mesh_options_override_default
@@ -519,8 +519,8 @@ class RendererRepresentation:
                 a_color = self.bond_type_rendering[bond_type].color
                 b_color = a_color
             else:
-                print(
-                    "Warning: Setting bonds to default since colorby was bondtype, but bond_type color was not set\n"
+                warnings.warn(
+                    "Setting bonds to default since colorby was bondtype, but bond_type color was not set"
                 )
                 a_color = self.default_bond_color
                 b_color = a_color
@@ -535,7 +535,7 @@ class RendererRepresentation:
                 render_options,
             )
         else:
-            print("Warning: No bond type render options set for bond type", bond_type)
+            warnings.warn(f"No bond type render options set for bond type {bond_type}")
             options = render_options
         self.num_bonds += 1
         if actor_name is not None:

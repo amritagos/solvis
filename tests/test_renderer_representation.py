@@ -1,9 +1,9 @@
 import pytest
 import numpy as np
 from ase.io import read
-from ase.atoms import Atom, Atoms
 from ase.data import chemical_symbols
 from pathlib import Path
+import warnings
 
 import solvis
 
@@ -40,6 +40,7 @@ def capped_trigonal_prism_solv_system():
     return solvation_shell
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     """
     Test that the RendererRepresentation can accurately describe elements required for plotting.

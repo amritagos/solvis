@@ -1,10 +1,6 @@
-from ase import Atom, Atoms
 from ase.data import chemical_symbols
-from ase.io import lammpsdata, read
-import numpy as np
-from scipy.spatial import ConvexHull
+from ase.io import read
 from pathlib import Path
-from pyvista import PolyData
 
 import solvis
 from solvis.visualization import AtomicPlotter
@@ -86,7 +82,7 @@ solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(
 )
 
 # Change the color of the seventh atom
-seventh_mol_name = list(render_rep.atoms.keys())[-1]
+seventh_mol_name = render_rep.atoms.atoms[-1].name
 render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
 
 # Add bonds from the center to the solvent atoms

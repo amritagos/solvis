@@ -65,7 +65,7 @@ solvis.vis_initializers.fill_render_rep_atoms_from_solv_shell(
 )
 
 # Change the color of the seventh atom
-seventh_mol_name = list(render_rep.atoms.keys())[-1]
+seventh_mol_name = render_rep.atoms.atoms[-1].name
 render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
 
 # Add the edges as bonds (edges are wrt convex_hull here, with the same order as atoms in solvation_shell)

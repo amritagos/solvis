@@ -1,11 +1,6 @@
-from ase import Atom, Atoms
 from ase.data import chemical_symbols
-from ase.io import lammpsdata, read
-import numpy as np
-from scipy.spatial import ConvexHull
+from ase.io import read
 from pathlib import Path
-from pyvista import PolyData
-import pyvista as pv
 
 import solvis
 from solvis.visualization import AtomicPlotter

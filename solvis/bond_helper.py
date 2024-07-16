@@ -1,6 +1,9 @@
 from ase import Atom, Atoms
 from ase.data import chemical_symbols
+from typing import Any
 import math
+
+from solvis.solvation_shell import SolvationShell
 from .util import (
     k_nearest_neighbours,
     minimum_image_distance,
@@ -9,7 +12,20 @@ from .util import (
 )
 
 
-def find_intra_water_bonds(atoms, o_type, h_type, box_len):
+def find_intra_water_bonds(
+    atoms: Atoms, o_type: int, h_type: int, box_len: Any
+) -> list[list[int, int]]:
+    """Gets the intramolecular OH bonds in water molecules
+
+    Args:
+        atoms (Atoms): ASE Atoms object
+        o_type (int): Integer type (LAMMPS type for example) of the O atom (atomic number in ASE)
+        h_type (int): Type of the H atom
+        box_len (Any): Box size dimensions
+
+    Returns:
+        list[list[int, int]]: Intramolecular OH bonds, wherein each bond is represented by tags
+    """
     bonds = []
     num_h_per_o = 2
 
@@ -38,14 +54,14 @@ def find_intra_water_bonds(atoms, o_type, h_type, box_len):
 
 
 def find_all_hydrogen_bonds(
-    solvation_shell,
-    donor_types,
-    acceptor_types,
-    h_types,
-    donor_H_distance=1.0,
-    donor_acceptor_cutoff=3.1,
-    ignore_hydrogens=False,
-):
+    solvation_shell: SolvationShell,
+    donor_types: list[int],
+    acceptor_types: list[int],
+    h_types: list[int],
+    donor_H_distance: float = 1.0,
+    donor_acceptor_cutoff: float = 3.1,
+    ignore_hydrogens: bool = False,
+) -> list[list[int, int]]:
     """
     Can find hydrogen bonds between donor and acceptor atom types. The H atom type must be provided as well.
     Hydrogen bonds are found according to a geometric criterion. A donor (D) is an
@@ -54,6 +70,18 @@ def find_all_hydrogen_bonds(
     follows: 1) the distance DA between the donor and acceptor should be less than
     or equal to 3.1 Angstroms, which corresponds to the first minimum in the O-O RDF
     of water, and 2) the angle HDA should be less than or equal to 30 degrees.
+
+    Args:
+        solvation_shell (SolvationShell): SolvationShell object
+        donor_types (list[int]): List of all the integral types of the donor atom(s)
+        acceptor_types (list[int]): List of all the integral types of the acceptor atom(s)
+        h_types (list[int]): List of all the integral types of the H atoms
+        donor_H_distance (float, optional): Intramolecular distance between the donor and H atom. Defaults to 1.0, which gets all the OH bonds in water.
+        donor_acceptor_cutoff (float, optional): Distance between the donor and acceptor, taking into account the minimum image convention. Defaults to 3.1. I have found that 3.5 is usually too big a cutoff for water, and 3.0 is too small a cutoff when I have chloride ions in the system.
+        ignore_hydrogens (bool, optional): If you set this to false, then the hydrogen bonds returned are between the H and the acceptor atom. Otherwise the bond is created between the acceptor and donor. Defaults to False.
+
+    Returns:
+        list[list[int, int]]: List of hydrogen bonds, wherein each bond is represented by tags
     """
     bonds = []  # will hold all found hydrogen bonds
 
@@ -112,18 +140,31 @@ def find_all_hydrogen_bonds(
 
 
 def find_hydrogen_bonds_to_donor_or_acceptor(
-    atom_tag,
-    solvation_shell,
-    donor_types,
-    acceptor_types,
-    h_types,
-    donor_H_distance=1.0,
-    donor_acceptor_cutoff=3.1,
-    ignore_hydrogens=False,
-):
+    atom_tag: int,
+    solvation_shell: SolvationShell,
+    donor_types: list[int],
+    acceptor_types: list[int],
+    h_types: list[int],
+    donor_H_distance: float = 1.0,
+    donor_acceptor_cutoff: float = 3.1,
+    ignore_hydrogens: bool = False,
+) -> list[list[int, int]]:
     """
     Find hydrogen bonds emanating from or to a particular donor/acceptor in a solvation shell. The donor type must have H atoms bonded to it, within a distance of donor_H_distance. The atom_tag is
     also present in the solvation shell.
+
+    Args:
+        atom_tag (int): tag of the atom from which or to which hydrogen bonds will be found. This can be either a donor or an acceptor
+        solvation_shell (SolvationShell): SolvationShell object
+        donor_types (list[int]): List of all the integral types of the donor atom(s)
+        acceptor_types (list[int]): List of all the integral types of the acceptor atom(s)
+        h_types (list[int]): List of all the integral types of the H atoms
+        donor_H_distance (float, optional): Intramolecular distance between the donor and H atom. Defaults to 1.0, which gets all the OH bonds in water.
+        donor_acceptor_cutoff (float, optional): Distance between the donor and acceptor, taking into account the minimum image convention. Defaults to 3.1. I have found that 3.5 is usually too big a cutoff for water, and 3.0 is too small a cutoff when I have chloride ions in the system.
+        ignore_hydrogens (bool, optional): If you set this to false, then the hydrogen bonds returned are between the H and the acceptor atom. Otherwise the bond is created between the acceptor and donor. Defaults to False.
+
+    Returns:
+        list[list[int, int]]: List of hydrogen bonds, wherein each bond is represented by tags
     """
     # Get the chemical symbols corresponding the acceptor types, donor types and H types
     donor_symbols = [chemical_symbols[x] for x in donor_types]
@@ -208,61 +249,5 @@ def find_hydrogen_bonds_to_donor_or_acceptor(
                     else [atom_tag, donor_tags[d_ind]]
                 )
                 bonds.append(bond)
-
-    return bonds
-
-
-def find_water_hydrogen_bonds(o_atom_tag, solvation_shell, o_type, h_type):
-    """
-    Find hydrogen bonds, in a solvation_shell with O and H types. The o_atom_tag is
-    also present in the solvation shell
-    """
-    bonds = []  # List of atom tags
-
-    all_tags = solvation_shell.atoms.get_tags()
-    all_pos = solvation_shell.atoms.get_positions()
-
-    o_query_index = solvation_shell.tag_manager.lookup_index_by_tag(o_atom_tag)
-    o_query_pos = all_pos[o_query_index]
-
-    # Find all O atom indices in ASE atoms object
-    o_all_ind = solvation_shell.atoms.symbols.search(chemical_symbols[o_type])
-    o_tags = all_tags[o_all_ind]
-    o_pos = all_pos[o_all_ind]
-
-    # Find all H atom indices in ASE atoms object
-    h_all_ind = solvation_shell.atoms.symbols.search(chemical_symbols[h_type])
-    h_tags = all_tags[h_all_ind]
-    h_pos = all_pos[h_all_ind]
-
-    # For a given O atom, find the neighbouring O atoms within 3.5 Angstrom
-    o_neigh = nearest_neighbours_within_cutoff(o_pos, o_query_pos, 3.0)
-
-    for o_ind in o_neigh:
-        # Find the distance
-        o_o_dist = minimum_image_distance(o_query_pos, o_pos[o_ind])
-
-        if math.isclose(o_o_dist, 0.0, rel_tol=1e-4):
-            continue
-
-        # Find the two closest H atom neighbours of this O atom
-        h_dist, h_ind = k_nearest_neighbours(h_pos, o_pos[o_ind], 2)
-
-        for current_h in h_ind:
-
-            # Neglect if the OA distance is greater than 2.42
-            o_a_dist = minimum_image_distance(h_pos[current_h], o_query_pos)
-            if o_a_dist > 2.42:
-                continue
-
-            # Get the angle
-            # HDA
-            angle = angle_between_points(h_pos[current_h], o_pos[o_ind], o_query_pos)
-
-            if angle > 90:
-                angle = 180 - angle
-
-            if angle <= 30:
-                bonds.append([o_atom_tag, h_tags[current_h]])
 
     return bonds

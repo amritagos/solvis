@@ -80,6 +80,17 @@ class AllAtomInfo:
         """
         return self._first(x for x in self.atoms if x.name == actor_name)
 
+    def find_first_atom_with_type(self, atom_type: int) -> Optional[SingleAtomInfo]:
+        """Get the first SingleAtomInfo object such that the atom type matches the target type
+
+        Args:
+            type (int): Target atom tag to match against
+
+        Returns:
+            Optional[SingleAtomInfo]: Optional[SingleAtomInfo]: Either the SingleAtomInfo object or None
+        """
+        return self._first(x for x in self.atoms if x.type == atom_type)
+
     def find_atom_with_tag(self, tag: int) -> Optional[SingleAtomInfo]:
         """Get the first SingleAtomInfo object such that the atom tag matches the target tag
 
@@ -351,6 +362,21 @@ class RendererRepresentation:
             Optional[str]: The actor name, or None if it does not exist
         """
         atom_info = self.atoms.find_atom_with_tag(target_atom_tag)
+        if atom_info is not None:
+            return atom_info.name
+        else:
+            return None
+
+    def get_center_actor_name_from_type(self, center_atom_type: int) -> Optional[str]:
+        """Get the actor name of the center, given the type of the center
+
+        Args:
+            center_atom_type (int): Atom type of the center
+
+        Returns:
+            Optional[str]: The actor name, or None if it does not exist
+        """
+        atom_info = self.atoms.find_first_atom_with_type(center_atom_type)
         if atom_info is not None:
             return atom_info.name
         else:

@@ -117,24 +117,26 @@ def find_all_hydrogen_bonds(
             if donor_tag == acceptor_tags[a_ind]:
                 continue
 
-        # Find the closest H atoms to the donor atom within the D-H distance cutoff
-        h_ind = nearest_neighbours_within_cutoff(h_pos, d_query_pos, donor_H_distance)
-
-        for current_h in h_ind:
-            angle = angle_between_points(
-                h_pos[current_h], d_query_pos, acceptor_pos[a_ind]
+            # Find the closest H atoms to the donor atom within the D-H distance cutoff
+            h_ind = nearest_neighbours_within_cutoff(
+                h_pos, d_query_pos, donor_H_distance
             )
 
-            if angle > 90:
-                angle = 180 - angle
-
-            if angle <= 30:
-                bond = (
-                    [acceptor_tags[a_ind], h_tags[current_h]]
-                    if not ignore_hydrogens
-                    else [acceptor_tags[a_ind], donor_tag]
+            for current_h in h_ind:
+                angle = angle_between_points(
+                    h_pos[current_h], d_query_pos, acceptor_pos[a_ind]
                 )
-                bonds.append(bond)
+
+                if angle > 90:
+                    angle = 180 - angle
+
+                if angle <= 30:
+                    bond = (
+                        [acceptor_tags[a_ind], h_tags[current_h]]
+                        if not ignore_hydrogens
+                        else [acceptor_tags[a_ind], donor_tag]
+                    )
+                    bonds.append(bond)
 
     return bonds
 

@@ -17,6 +17,7 @@ dependencies:
   - ipython
   - pandas 
   - pyvista==0.43.0
+  - pytest-pyvista
   # Dependencies for pyvista
   - vtk==9.2.6
   - pillow==10.0.1

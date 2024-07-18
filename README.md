@@ -38,11 +38,11 @@ In order to debug tests using `pdb`, you can write the command `breakpoint()` in
 To see more verbose output from `pytest`, including tests that pass, you can run `pytest -rA`.
 
 ## Image Gallery
-
-<img src="resources/non_octahedral_shape.png" width="200" />
-
-<img src="resources/octahedral_shell.png" width="200" />
-
-<img src="resources/shell_with_hbonds.png" width="200" />
-
-<img src="resources/hbond_non_oct.png" width="200" />
+<p align="middle">
+    <img src="resources/non_octahedral_shape.png" width="200" />
+    <img src="resources/octahedral_shell.png" width="200" />
+</p>
+<p align="middle">
+    <img src="resources/shell_with_hbonds.png" width="200" />
+    <img src="resources/hbond_non_oct.png" width="200" />
+</p>

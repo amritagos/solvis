@@ -1,11 +1,6 @@
-from ase import Atom, Atoms
 from ase.data import chemical_symbols
-from ase.io import lammpsdata, read
-import numpy as np
-from scipy.spatial import ConvexHull
+from ase.io import read
 from pathlib import Path
-from pyvista import PolyData
-import pyvista as pv
 
 import solvis
 from solvis.visualization import AtomicPlotter
@@ -128,7 +123,7 @@ solvis.vis_initializers.populate_plotter_from_solv_shell(
 )
 # Add a description of the image
 pl_render.plotter.add_text(
-    "D-A <= 3.1 Angstrom; angle HDA <=30",
+    "D-A <= 3.3 Angstrom; angle HDA <=30",
     position="upper_left",
     font_size=186,
     color="black",

@@ -1,12 +1,9 @@
 import pandas as pd
-from ase import Atom, Atoms
 from ase.data import chemical_symbols
-from ase.io import lammpsdata, read
+from ase.io import read
 import numpy as np
-from scipy.spatial import ConvexHull
 from scipy.stats import sem
 from pathlib import Path
-from pyvista import PolyData
 
 import solvis
 
@@ -103,9 +100,7 @@ for iframe, currentframe in enumerate(traj):
         df.loc[iframe, f"r6{j_ion}"] = r6_val  # distance of 6 closest neighbours
         df.loc[iframe, f"cn{j_ion}"] = cn_val
 
-df.to_csv(
-    output_file, index=False, header=True, mode="w", line_terminator="\n", sep=" "
-)
+df.to_csv(output_file, index=False, header=True, mode="w", sep=" ")
 
 # Filter non-octahedral and octahedral data
 # Octahedral if sph >= 0.836694

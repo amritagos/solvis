@@ -1,9 +1,9 @@
 import pytest
 import numpy as np
 from ase.io import read
-from ase.atoms import Atom, Atoms
 from ase.data import chemical_symbols
 from pathlib import Path
+import warnings
 
 import solvis
 
@@ -40,6 +40,7 @@ def capped_trigonal_prism_solv_system():
     return solvation_shell
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     """
     Test that the RendererRepresentation can accurately describe elements required for plotting.
@@ -73,12 +74,12 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.add_atom_type_rendering(
         atom_type=fe_type, color=fe_color, radius=fe_radius
     )
-    assert render_rep.atom_type_rendering[fe_type].get("color") == "black"
+    assert render_rep.atom_type_rendering[fe_type].color == "black"
     fe_atom_options = render_rep.get_atom_rendering_options(atom_type=fe_type)
     assert fe_atom_options == {"radius": 0.3}
     # Atom type of the O atoms
     render_rep.add_atom_type_rendering(atom_type=o_type, color=o_color, radius=o_radius)
-    assert render_rep.atom_type_rendering[o_type].get("color") == "midnightblue"
+    assert render_rep.atom_type_rendering[o_type].color == "midnightblue"
     o_atom_options = render_rep.get_atom_rendering_options(atom_type=o_type)
     assert o_atom_options == {"radius": 0.2}
 
@@ -86,7 +87,7 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     render_rep.add_atom(
         "center", fe_type, color=None, actor_name="fe", label=None
     )  # Handle atom_tag='center' for solvation center! TODO
-    assert render_rep.num_atoms == 1
+    assert render_rep.atoms.num_atoms == 1
     # Loop through the solvation atoms and add them
     for i, solv_atom in enumerate(capped_trigonal_prism_solv_system.atoms):
         iatom_type = solv_atom.number
@@ -94,11 +95,13 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
         render_rep.add_atom(iatom_tag, iatom_type)
 
     # There should be 8 atoms in the renderer represenation
-    assert render_rep.num_atoms == len(capped_trigonal_prism_solv_system.atoms) + 1
+    assert (
+        render_rep.atoms.num_atoms == len(capped_trigonal_prism_solv_system.atoms) + 1
+    )
 
     # Retreive the indices and coord using atom tags from the solvation shell object
-    for i, name in enumerate(render_rep.atoms.keys()):
-        tag = render_rep.get_tag_from_atom_name(name)
+    for i, atom in enumerate(render_rep.atoms.atoms):
+        tag = atom.tag
         if tag == "center":
             coord = capped_trigonal_prism_solv_system.center
         else:
@@ -110,13 +113,13 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
             coord = capped_trigonal_prism_solv_system.atoms.get_positions()[index]
 
     # Change the colour of the furthest solvent atom to red
-    seventh_mol_name = list(render_rep.atoms.keys())[-1]
+    seventh_mol_name = render_rep.atoms.atoms[-1].name
     render_rep.update_atom_color(seventh_mol_name, color="red")
     seventh_mol_options = render_rep.get_render_info_from_atom_name(seventh_mol_name)
     assert seventh_mol_options == {"radius": 0.2}
     # Check that you can access the new color of this atom from the atom tag
     # This can be used for getting bond colors
-    seventh_mol_tag = render_rep.atoms.get(seventh_mol_name).get("tag")
+    seventh_mol_tag = render_rep.atoms.atoms[-1].tag
     seventh_mol_color = render_rep.find_color_by_atom_tag(seventh_mol_tag)
     assert seventh_mol_color == "red"
 
@@ -139,7 +142,7 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
 
     # Add a bond type color
     render_rep.add_bond_type_rendering(bond_type=assigned_bond_type, color="dimgrey")
-    assert render_rep.bond_type_rendering[assigned_bond_type].get("color") == "dimgrey"
+    assert render_rep.bond_type_rendering[assigned_bond_type].color == "dimgrey"
 
     # Add a bond between the first and second atoms, coloured according to the bond_type color
     tag3 = capped_trigonal_prism_solv_system.atoms[1].tag
@@ -174,9 +177,9 @@ def test_renderer_helper_ctp_system(capped_trigonal_prism_solv_system):
     assert render_rep.hulls["hull_1"].get("color") == "skyblue"
 
     # Test that you can delete things from the RendererRepresentation object
-    assert "fe" in render_rep.atoms.keys()
+    assert render_rep.atoms.find_atom_with_name("fe")
     render_rep.delete_atom("fe")
-    assert "fe" not in render_rep.atoms.keys()
+    assert render_rep.atoms.find_atom_with_name("fe") is None
     # Delete the bonds
     render_rep.delete_bond("bond_1")
     render_rep.delete_bond("bond_2")
@@ -225,10 +228,12 @@ def test_renderer_helper_populate(capped_trigonal_prism_solv_system):
         render_rep, capped_trigonal_prism_solv_system, include_center=True
     )
     # There should be 8 atoms in the renderer represenation
-    assert render_rep.num_atoms == len(capped_trigonal_prism_solv_system.atoms) + 1
+    assert (
+        render_rep.atoms.num_atoms == len(capped_trigonal_prism_solv_system.atoms) + 1
+    )
 
     # Change the colour of the seventh atom
-    seventh_mol_name = list(render_rep.atoms.keys())[-1]
+    seventh_mol_name = render_rep.atoms.atoms[-1].name
     render_rep.update_atom_color(seventh_mol_name, color="red")
     seventh_mol_options = render_rep.get_render_info_from_atom_name(seventh_mol_name)
 

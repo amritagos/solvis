@@ -1,12 +1,6 @@
-from ase import Atom, Atoms
 from ase.data import chemical_symbols
-from ase.io import lammpsdata, read
-import numpy as np
-from scipy.spatial import ConvexHull
+from ase.io import read
 from pathlib import Path
-from pyvista import PolyData
-import pyvista as pv
-import math
 
 import solvis
 from solvis.visualization import AtomicPlotter
@@ -122,7 +116,7 @@ seventh_mol_name = render_rep.get_atom_name_from_tag(target_atom_tag=seventh_mol
 render_rep.update_atom_color(seventh_mol_name, color=seventh_neigh_color)
 
 # Add bonds from the center to the solvent atoms
-bond1_render_opt = render_rep.bond_type_rendering[1].get("render_options")
+bond1_render_opt = render_rep.bond_type_rendering[1].render_options
 for solv_atom in solvation_shell.atoms:
     if solv_atom.number == o_type:
         iatom_tag = solv_atom.tag

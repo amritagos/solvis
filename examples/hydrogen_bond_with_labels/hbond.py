@@ -123,7 +123,7 @@ solvis.vis_initializers.populate_plotter_from_solv_shell(
 )
 # Add a description of the image
 pl_render.plotter.add_text(
-    "D-A <= 3.1 Angstrom; angle HDA <=30",
+    "D-A <= 3.3 Angstrom; angle HDA <=30",
     position="upper_left",
     font_size=186,
     color="black",

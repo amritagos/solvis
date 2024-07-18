@@ -7,7 +7,7 @@ from solvis.visualization import AtomicPlotter
 
 # Input filename
 script_dir = Path(__file__).resolve().parent
-infilename = script_dir / "input/single_hbond.lammpstrj"
+infilename = script_dir / "../../resources/single_hbond.lammpstrj"
 # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 4 for O, H and Cl respectively.
 cl_type = 4
 h_type = 2

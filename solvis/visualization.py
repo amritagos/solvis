@@ -475,4 +475,8 @@ class AtomicPlotter:
             self.plotter.camera_position = camera_position
             self.plotter.camera_set = True
         # Take the screenshot
-        self.plotter.screenshot(imagename)
+        self.plotter.screenshot(imagename, return_img=False)
+
+    def close(self):
+        """Close the plotter window"""
+        self.plotter.close()

@@ -23,7 +23,8 @@ pip install -e .
 
 ## Examples 
 
-Each example is self-contained. Go into the example directory and run the script. The inputs are short LAMMPS dump files inside the top-level `resources` directory.  
+Each example is self-contained. Mostly, they show how to handle interactive plotting.
+To close the interactive window, press q. 
 
 ## Tests
 
@@ -36,6 +37,8 @@ pytest -v
 In order to debug tests using `pdb`, you can write the command `breakpoint()` inside the `Python` files (in `tests`) wherever you want to set a breakpoint. Then, run `pytest --pdb`. This will stop the code at the line where you put the `breakpoint()` command. 
 
 To see more verbose output from `pytest`, including tests that pass, you can run `pytest -rA`.
+
+Note that `test_hydrogen_bond.py` and `test_plot_octahedral_shell.py` actually compare the results of images created for a single hydrogen bond and for an octahedral shell showing hydrogen bonds formed by the acceptor seventh molecule, respectively. The images compared against are present in the top-level `image_cache_dir` directory.
 
 ## Image Gallery
 <p float="left">

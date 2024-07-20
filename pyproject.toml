@@ -10,6 +10,8 @@ description = "A module for analyzing and visualizing solvation shells in LAMMPS
 authors = [
     {name = "Amrita Goswami", email = "amrita@hi.is"},
 ]
+classifiers=[
+        'Programming Language :: Python :: 3.3']
 dependencies = [
     "ase == 3.22.1",
     "numpy == 1.22.4",

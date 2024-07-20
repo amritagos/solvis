@@ -14,9 +14,10 @@ dependencies:
   - ase==3.22.1
   - numpy==1.22.4
   - scipy==1.7.3
-  - ipython
-  - pandas 
+  - ipython>=8.26.0
+  - pandas>=2.2.2
   - pyvista==0.43.0
+  - pytest-pyvista
   # Dependencies for pyvista
   - vtk==9.2.6
   - pillow==10.0.1
@@ -34,7 +35,8 @@ dependencies:
   - isort==5.9.3
   - autoflake==1.4
   - flake8-docstrings==1.6.0 
-  - meson-python
+  - meson-python>=0.16.0
+  - pytest-cov>=3.0.0
   - pip:
     # works for regular pip packages
     - lammps-logfile

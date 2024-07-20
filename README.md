@@ -40,6 +40,12 @@ To see more verbose output from `pytest`, including tests that pass, you can run
 
 Note that `test_hydrogen_bond.py` and `test_plot_octahedral_shell.py` actually compare the results of images created for a single hydrogen bond and for an octahedral shell showing hydrogen bonds formed by the acceptor seventh molecule, respectively. The images compared against are present in the top-level `image_cache_dir` directory.
 
+To view a coverage report, run the following from the top-level directory: 
+
+```bash
+pytest --cov=solvis tests/
+```
+
 ## Image Gallery
 <p float="left">
     <img src="resources/non_octahedral_shape.png" width="200" />

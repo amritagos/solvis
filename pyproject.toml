@@ -4,9 +4,9 @@ build-backend = "mesonpy"
 # Important, tells pip how to install the package
 
 [project]
-name = "solvis"
+name = "solvis-tools"
 version = "0.0.1"
-description = "A module for analyzing and visualizing solvation shells in LAMMPS output files."
+description = "A module for analyzing and visualizing solvation shells in LAMMPS output files, but would work with most files that can be handled by ASE."
 authors = [
     {name = "Amrita Goswami", email = "amrita@hi.is"},
 ]

@@ -150,4 +150,4 @@ def test_single_hbond(verify_image_cache):
 
     # Verify image
     pl_render.plotter.show(auto_close=True, interactive=False)
-    pl_render.plotter.close()
+    pl_render.close()

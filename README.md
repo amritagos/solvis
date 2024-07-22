@@ -1,6 +1,6 @@
 # solvis
 
-<img src="branding/logo/logo.png" width="300" />
+<img src="https://github.com/amritagos/solvis/blob/main/branding/logo/logo.png" width="300" />
 
 ## About
 
@@ -48,10 +48,10 @@ pytest --cov=solvis tests/
 
 ## Image Gallery
 <p float="left">
-    <img src="resources/non_octahedral_shape.png" width="200" />
-    <img src="resources/octahedral_shell.png" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/non_octahedral_shape.png" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/octahedral_shell.png" width="200" />
 </p>
 <p float="left">
-    <img src="resources/shell_with_hbonds.png" width="200" />
-    <img src="resources/hbond_non_oct.png" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/shell_with_hbonds.png" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/hbond_non_oct.png" width="200" />
 </p>

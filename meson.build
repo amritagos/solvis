@@ -1,7 +1,7 @@
 project('solvis')
 
 py_mod = import('python')
-py = py_mod.find_installation(pure: false)
+py = py_mod.find_installation(pure: true) # This is pure Python, so maybe this should be true
 
 # solvis, main package
 py.install_sources([
@@ -16,6 +16,6 @@ py.install_sources([
     'solvis/vis_initializers.py',
     'solvis/visualization.py'
   ],
-  pure: false, # install next to compiled extension
+  pure: true, # no compiled extension
   subdir: 'solvis'
 )

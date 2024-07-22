@@ -1,12 +1,22 @@
 # solvis
 
-<img src="branding/logo/logo.png" width="300" />
+<img src="https://github.com/amritagos/solvis/blob/main/branding/logo/logo.png?raw=true" width="300" />
 
 ## About
 
 Various ways to analyze and visualize solvation shell structures, which wraps [`PyVista`](https://docs.pyvista.org/version/stable/). Meant primarily for analyzing the outputs produced by LAMMPS here. 
 
-## Installation
+## Installation 
+
+### From PyPI
+
+You can install `solvis` from PyPI like so: 
+
+```bash
+pip install solvis-tools
+```
+
+### From source
 
 We use [`micromamba`](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html) as the package manager, but feel free to use your own poison. Create and activate the environment. 
 
@@ -48,10 +58,10 @@ pytest --cov=solvis tests/
 
 ## Image Gallery
 <p float="left">
-    <img src="resources/non_octahedral_shape.png" width="200" />
-    <img src="resources/octahedral_shell.png" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/non_octahedral_shape.png?raw=true" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/octahedral_shell.png?raw=true" width="200" />
 </p>
 <p float="left">
-    <img src="resources/shell_with_hbonds.png" width="200" />
-    <img src="resources/hbond_non_oct.png" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/shell_with_hbonds.png?raw=true" width="200" />
+    <img src="https://github.com/amritagos/solvis/blob/main/resources/hbond_non_oct.png?raw=true" width="200" />
 </p>

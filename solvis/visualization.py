@@ -4,7 +4,6 @@ import numpy as np
 from scipy.spatial import ConvexHull, Delaunay
 from scipy.spatial import KDTree
 import math
-import pandas as pd
 from pathlib import Path
 from pyvista import PolyData
 import pyvista as pv

@@ -1,25 +1,27 @@
 [build-system]
-requires = ["meson-python"]
+requires = ["meson-python>=0.16.0"]
 build-backend = "mesonpy"
 # Important, tells pip how to install the package
 
 [project]
-name = "solvis"
-version = "0.0.1"
-description = "A module for analyzing and visualizing solvation shells in LAMMPS output files."
+name = "solvis-tools"
+version = "0.1.4"
+description = "A module for analyzing and visualizing solvation shells in LAMMPS output files, but would work with most files that can be handled by ASE."
 authors = [
     {name = "Amrita Goswami", email = "amrita@hi.is"},
 ]
+classifiers=[
+        'Programming Language :: Python :: 3.10']
 dependencies = [
     "ase == 3.22.1",
-    "numpy == 1.22.4",
-    "scipy == 1.7.3",
+    "numpy",
+    "scipy >= 1.7.3",
     "pyvista == 0.43.0",
     "pillow == 10.0.1",
     "imageio == 2.31.5",
     "pooch==1.8.0",
     "scooby==0.9.2"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 

@@ -10,10 +10,11 @@ channels:
 #     - {{ compiler('c') }}
 #     - {{ compiler('c++') }}
 dependencies:
-  - python==3.10
-  - ase==3.22.1
-  - numpy==1.22.4
-  - scipy==1.7.3
+  - python>=3.10
+  - build<0.10.0
+  - ase>=3.22.1
+  - numpy>=1.26.4 # 1.22.4
+  - scipy>=1.7.3
   - ipython>=8.26.0
   - pandas>=2.2.2
   - pyvista==0.43.0
@@ -25,6 +26,7 @@ dependencies:
   - pooch==1.8.0
   - scooby==0.9.2
   # Packaging
+  - twine
   - flit==3.9.0
   - pytest==6.2.5
   - coverage==6.1.1
@@ -37,6 +39,6 @@ dependencies:
   - flake8-docstrings==1.6.0 
   - meson-python>=0.16.0
   - pytest-cov>=3.0.0
-  - pip:
-    # works for regular pip packages
-    - lammps-logfile
+  # - pip:
+  #   # works for regular pip packages
+  #   - lammps-logfile

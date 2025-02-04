@@ -5,7 +5,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "solvis-tools"
-version = "0.1.4"
+version = "0.1.5"
 description = "A module for analyzing and visualizing solvation shells in LAMMPS output files, but would work with most files that can be handled by ASE."
 authors = [
     {name = "Amrita Goswami", email = "amrita@hi.is"},
@@ -13,31 +13,31 @@ authors = [
 classifiers=[
         'Programming Language :: Python :: 3.10']
 dependencies = [
-    "ase == 3.22.1",
+    "ase >= 3.22.1",
     "numpy",
     "scipy >= 1.7.3",
-    "pyvista == 0.43.0",
-    "pillow == 10.0.1",
-    "imageio == 2.31.5",
-    "pooch==1.8.0",
-    "scooby==0.9.2"]
+    "pyvista >= 0.43.0",
+    "pillow >= 10.0.1",
+    "imageio >= 2.31.5",
+    "pooch>=1.8.0",
+    "scooby>=0.9.2"]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]
 test = [
-    "pytest==6.2.5",
-    "coverage==6.1.1",
-    "pytest-cov==3.0.0",
+    "pytest>=6.2.5",
+    "coverage>=6.1.1",
+    "pytest-cov>=3.0.0",
 ]
 dev = [
-    "flake8==3.9.2",
-    "mypy==0.910",
-    "black==22.3.0",
-    "isort==5.9.3",
-    "autoflake==1.4",
-    "flake8-docstrings==1.6.0",
+    "flake8>=3.9.2",
+    "mypy>=0.910",
+    "black>=22.3.0",
+    "isort>=5.9.3",
+    "autoflake>=1.4",
+    "flake8-docstrings>=1.6.0",
 ]
 examples = [
     "pandas"

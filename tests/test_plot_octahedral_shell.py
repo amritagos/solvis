@@ -13,7 +13,7 @@ def test_octahedral_shell(verify_image_cache):
     """
     # Input filename
     test_dir = Path(__file__).resolve().parent
-    infilename = test_dir / "../resources/system_oct_hbonds.data"
+    infilename = test_dir / "../resources/system_oct_hbonds.lammpstrj"
     # In the LAMMPS trajectory file, the types of atoms are 1, 2 and 3 for O, H and Fe respectively.
     fe_type = 3
     h_type = 2
@@ -30,10 +30,10 @@ def test_octahedral_shell(verify_image_cache):
 
     # Read in the current frame
     currentframe = read(
-        infilename, format="lammps-data"
+        infilename, format="lammps-dump-text"
     )  # Read in the last frame of the trajectory
     # Box size lengths
-    box_len = currentframe.get_cell_lengths_and_angles()[:3]
+    box_len = currentframe.cell.cellpar()[:3]
 
     # Make a System object
     full_system = solvis.system.System(currentframe, expand_box=True)
@@ -127,7 +127,7 @@ def test_octahedral_shell(verify_image_cache):
                 ["center", iatom_tag],
                 bond_type=1,
                 colorby="bondtype",
-                **bond1_render_opt
+                **bond1_render_opt,
             )
 
     # Change the color of the bond from the seventh atom

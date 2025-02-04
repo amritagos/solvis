@@ -32,7 +32,7 @@ def test_single_hbond(verify_image_cache):
         infilename, format="lammps-dump-text"
     )  # Read in the last frame of the trajectory
     # Box size lengths
-    box_len = currentframe.get_cell_lengths_and_angles()[:3]
+    box_len = currentframe.cell.cellpar()[:3]
 
     # Create a SolvationShell object from the solvent
     solvation_shell = solvis.solvation_shell.create_solvation_shell_from_solvent(

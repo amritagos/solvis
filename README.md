@@ -4,7 +4,7 @@
 
 ## About
 
-Various ways to analyze and visualize solvation shell structures, which wraps [`PyVista`](https://docs.pyvista.org/version/stable/). Meant primarily for analyzing the outputs produced by LAMMPS here. 
+Various ways to analyze and visualize solvation shell structures, which wraps [`PyVista`](https://docs.pyvista.org/version/stable/). Meant primarily for analyzing the outputs produced by LAMMPS, but anything that [ASE](https://gitlab.com/ase/ase) can handle should work.
 
 ## Installation 
 
@@ -48,7 +48,7 @@ In order to debug tests using `pdb`, you can write the command `breakpoint()` in
 
 To see more verbose output from `pytest`, including tests that pass, you can run `pytest -rA`.
 
-Note that `test_hydrogen_bond.py` and `test_plot_octahedral_shell.py` actually compare the results of images created for a single hydrogen bond and for an octahedral shell showing hydrogen bonds formed by the acceptor seventh molecule, respectively. The images compared against are present in the top-level `image_cache_dir` directory.
+Note that `test_hydrogen_bond.py` and `test_plot_octahedral_shell.py` actually compare the results of images created for a single hydrogen bond and for an octahedral shell showing hydrogen bonds formed by the acceptor seventh molecule, respectively. The images compared against are present in the top-level `image_cache_dir` directory. The package [`pytest-pyvista`](https://github.com/pyvista/pytest-pyvista) is used for image verification.
 
 To view a coverage report, run the following from the top-level directory: 
 
